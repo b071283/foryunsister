@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  // 偵測 in-app browser（LINE / FB / IG），下載功能受限,顯示警告 banner
+  detectAndWarnWebview();
+
   // loadAsync 會處理 ?id=ABCDEFGH 短 URL（從 R2 拉 config）。如果失敗或沒有 id 參數,fallback 到 sync load()
   const cfg = await AppConfig.loadAsync();
   const name = cfg.person || "勻勻";
@@ -48,6 +51,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+  }
+
+  // 偵測常見 in-app browser → 顯示警告 + 複製網址按鈕
+  function detectAndWarnWebview() {
+    const ua = navigator.userAgent || "";
+    let name = null;
+    if (/Line\//i.test(ua)) name = "LINE";
+    else if (/FBAN|FBAV|FB_IAB/i.test(ua)) name = "Facebook";
+    else if (/Instagram/i.test(ua)) name = "Instagram";
+    else if (/MicroMessenger/i.test(ua)) name = "WeChat";
+    else if (/Threads/i.test(ua)) name = "Threads";
+    if (!name) return;
+
+    const banner = document.getElementById("webview-banner");
+    const nameEl = document.getElementById("webview-name");
+    const browserEl = document.getElementById("webview-browser");
+    const copyBtn = document.getElementById("webview-copy-btn");
+    if (!banner) return;
+
+    nameEl.textContent = name;
+    // 偵測作業系統推薦對應瀏覽器
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    browserEl.textContent = isIOS ? "Safari" : "Chrome";
+    banner.hidden = false;
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        copyBtn.textContent = "✅ 已複製";
+        setTimeout(() => (copyBtn.textContent = "📋 複製此頁網址"), 2000);
+      } catch {
+        // fallback：選取 url 給使用者長按複製
+        const ta = document.createElement("textarea");
+        ta.value = location.href;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        copyBtn.textContent = "✅ 已複製";
+        setTimeout(() => (copyBtn.textContent = "📋 複製此頁網址"), 2000);
+      }
+    });
   }
 
   function escapeHtml(s) {

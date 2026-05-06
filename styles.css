@@ -140,6 +140,64 @@ body[data-page="admin"] .container { max-width: 760px; }
   background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
 }
 
+/* in-app webview warning banner */
+.webview-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, #fff4e0, #ffe6cc);
+  border: 1.5px solid #d99e3a;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.webview-banner[hidden] { display: none; }
+.webview-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.webview-text {
+  flex: 1;
+  min-width: 200px;
+}
+.webview-text strong {
+  display: block;
+  color: #9a5a13;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.webview-text p {
+  margin: 0;
+  font-size: 13px;
+  color: #7a4f1f;
+  line-height: 1.5;
+}
+.webview-text code {
+  background: rgba(154, 90, 19, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.webview-copy {
+  appearance: none;
+  border: 1.5px solid #d99e3a;
+  background: #fff;
+  color: #9a5a13;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.webview-copy:hover {
+  background: #fff8e8;
+}
+
 /* clinic card */
 .clinic-card {
   background: var(--card-soft);
