@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理員 — 評價系統</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1 class="title">🔐 管理員設定</h1>
+
+    <section id="login-panel" class="panel">
+      <h2 class="panel-title">請登入</h2>
+      <form id="login-form" class="form" autocomplete="off">
+        <label class="field">
+          <span class="field-label">帳號</span>
+          <input type="text" id="login-user" required value="admin" />
+        </label>
+        <label class="field">
+          <span class="field-label">密碼</span>
+          <input type="password" id="login-pass" required />
+        </label>
+        <button type="submit" class="primary-btn">登入</button>
+        <p id="login-error" class="error-text" aria-live="polite"></p>
+      </form>
+      <p class="hint">預設帳密：<code>admin</code> / <code>admin</code>（登入後可改）</p>
+    </section>
+
+    <section id="settings-panel" class="panel" hidden>
+      <div class="panel-header">
+        <h2 class="panel-title">設定</h2>
+        <button id="logout-btn" type="button" class="text-btn">登出</button>
+      </div>
+
+      <form id="settings-form" class="form" autocomplete="off">
+        <div class="form-section">
+          <h3 class="form-section-title">公司資訊</h3>
+          <label class="field">
+            <span class="field-label">標題（推薦對象名稱）</span>
+            <input type="text" id="set-person" placeholder="例：曼蒂" />
+            <span class="field-hint">會顯示成「✨ {名稱}專屬評價」</span>
+          </label>
+          <label class="field">
+            <span class="field-label">公司／診所名稱</span>
+            <input type="text" id="set-clinic" placeholder="例：青熙美學診所" />
+          </label>
+          <label class="field">
+            <span class="field-label">地址</span>
+            <input type="text" id="set-address" placeholder="例：台中市南屯區益昌一街37號1樓" />
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Google 評論連結</h3>
+          <label class="field">
+            <span class="field-label">Google 評論網址</span>
+            <input type="url" id="set-google" placeholder="https://g.page/r/..." />
+            <span class="field-hint">在 Google 商家檔案 → 取得評論連結 即可複製</span>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">標籤（每行一個）</h3>
+          <label class="field">
+            <span class="field-label">推薦的優點</span>
+            <textarea id="set-pros" rows="10"></textarea>
+          </label>
+          <label class="field">
+            <span class="field-label">當天服務感受</span>
+            <textarea id="set-feelings" rows="6"></textarea>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">變更密碼（選填）</h3>
+          <label class="field">
+            <span class="field-label">新密碼</span>
+            <input type="password" id="set-newpass" placeholder="留空則不變更" />
+          </label>
+        </div>
+
+        <button type="submit" class="primary-btn">💾 儲存設定</button>
+        <p id="save-status" class="copy-status" aria-live="polite"></p>
+      </form>
+
+      <div class="form-section share-section">
+        <h3 class="form-section-title">📤 分享給客戶的連結</h3>
+        <p class="hint">每次儲存設定後，這條連結會更新。把它貼到 LINE / 限時動態 / QR Code，客戶打開就會看到對的內容。</p>
+        <div class="share-row">
+          <input type="text" id="share-url" readonly />
+          <button id="copy-share-btn" type="button" class="secondary-btn">📋 複製</button>
+        </div>
+        <div class="share-row">
+          <a id="preview-link" href="#" target="_blank" rel="noopener" class="secondary-btn">👀 預覽客戶看到的頁面</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <a class="admin-link" href="index.html" title="回首頁">🏠</a>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

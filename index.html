@@ -3,51 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>推薦系統</title>
+  <title>專屬評價</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <h1 class="title">✨ 專屬評價</h1>
+    <h1 class="title" id="title">✨ 專屬評價</h1>
 
     <section class="clinic-card">
-      <p class="clinic-name">📍 診所名稱</p>
-      <p class="clinic-address">地址尚未設定</p>
+      <p class="clinic-name" id="clinic-name">📍 載入中…</p>
+      <p class="clinic-address" id="clinic-address"></p>
     </section>
 
-    <section class="group">
+    <section class="group" id="group-pros">
       <h2 class="group-title">推薦的優點（多選）</h2>
-      <div class="tag-grid" data-group="pros">
-        <button type="button" class="tag">講解細緻清晰</button>
-        <button type="button" class="tag">減法建議不推銷</button>
-        <button type="button" class="tag">新手友善沒壓力</button>
-        <button type="button" class="tag">審美自然有質感</button>
-        <button type="button" class="tag">觀察力極強</button>
-        <button type="button" class="tag">流程專業誠懇</button>
-        <button type="button" class="tag">動作輕柔穩定</button>
-        <button type="button" class="tag">術後衛教專業</button>
-        <button type="button" class="tag">風險告知坦白</button>
-        <button type="button" class="tag">溝通非常有溫度</button>
-      </div>
+      <div class="tag-grid" data-group="pros"></div>
     </section>
 
-    <section class="group">
+    <section class="group" id="group-feelings">
       <h2 class="group-title">當天服務感受（多選）</h2>
-      <div class="tag-grid" data-group="feelings">
-        <button type="button" class="tag">全程放鬆不緊張</button>
-        <button type="button" class="tag">被細心呵護感</button>
-        <button type="button" class="tag">諮詢後很安心</button>
-        <button type="button" class="tag">聊天氛圍很愉快</button>
-      </div>
+      <div class="tag-grid" data-group="feelings"></div>
     </section>
 
     <section class="actions">
       <button id="submit-btn" type="button" class="primary-btn">送出評價</button>
     </section>
-
-    <div id="result" class="result" hidden></div>
   </main>
 
+  <div id="result-modal" class="modal" hidden>
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close" aria-label="關閉">×</button>
+      <h2 class="modal-title">🎉 完成 3 步驟就送出</h2>
+
+      <div class="modal-section">
+        <p class="modal-label">你的評論預覽</p>
+        <pre id="comment-preview" class="comment-box"></pre>
+      </div>
+
+      <ol class="step-list">
+        <li><strong>已自動複製評論到剪貼簿</strong>（如果沒成功，點下方「複製」）</li>
+        <li>點「前往 Google 評論」會開新分頁</li>
+        <li>在 Google 評論頁：<span class="hint">選 5 顆星 → Ctrl+V 貼上 → 送出</span></li>
+      </ol>
+
+      <div class="modal-actions">
+        <button id="copy-btn" type="button" class="secondary-btn">📋 複製評論</button>
+        <button id="open-google-btn" type="button" class="primary-btn">前往 Google 評論</button>
+      </div>
+
+      <p id="copy-status" class="copy-status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <a class="admin-link" href="admin.html" title="管理員">⚙</a>
+
+  <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
