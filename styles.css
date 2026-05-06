@@ -180,19 +180,40 @@ body[data-page="admin"] .container { max-width: 760px; }
   font-size: 13px;
   font-weight: 700;
 }
+.webview-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 4px;
+}
+.webview-primary,
 .webview-copy {
   appearance: none;
-  border: 1.5px solid #d99e3a;
-  background: #fff;
-  color: #9a5a13;
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  flex: 1;
+  min-height: 42px;
+}
+.webview-primary {
+  border: none;
+  background: linear-gradient(135deg, #d99e3a, #b87a1b);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(217, 158, 58, 0.35);
+}
+.webview-primary:hover {
+  transform: translateY(-1px);
+}
+.webview-copy {
+  border: 1.5px solid #d99e3a;
+  background: #fff;
+  color: #9a5a13;
 }
 .webview-copy:hover {
   background: #fff8e8;

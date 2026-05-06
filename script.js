@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (el) el.textContent = text;
   }
 
-  // 偵測常見 in-app browser → 顯示警告 + 複製網址按鈕
+  // 偵測常見 in-app browser → 顯示警告 + 「立即在外部瀏覽器開啟」按鈕
   function detectAndWarnWebview() {
     const ua = navigator.userAgent || "";
     let name = null;
@@ -67,22 +67,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     const banner = document.getElementById("webview-banner");
     const nameEl = document.getElementById("webview-name");
     const browserEl = document.getElementById("webview-browser");
+    const msgEl = document.getElementById("webview-msg");
+    const openBtn = document.getElementById("webview-open-btn");
     const copyBtn = document.getElementById("webview-copy-btn");
     if (!banner) return;
 
-    nameEl.textContent = name;
-    // 偵測作業系統推薦對應瀏覽器
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isAndroid = /Android/i.test(ua);
+
+    nameEl.textContent = name;
     browserEl.textContent = isIOS ? "Safari" : "Chrome";
     banner.hidden = false;
+
+    if (isAndroid) {
+      // Android 可以用 intent:// URL 強制 Chrome 接管
+      openBtn.textContent = "🚀 立即在 Chrome 開啟";
+      openBtn.addEventListener("click", () => {
+        const httpsUrl = location.href.replace(/^https?:\/\//, "");
+        const intentUrl = `intent://${httpsUrl}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`;
+        location.href = intentUrl;
+      });
+    } else if (isIOS) {
+      // iOS 沒辦法強制開 Safari（Apple 政策）→ 改成顯示步驟
+      openBtn.textContent = "📖 怎麼在 Safari 開啟";
+      msgEl.innerHTML =
+        "iOS 不允許網頁強制開 Safari，請手動：點右上角 <code>⋯</code> → 「<strong>在 Safari 開啟</strong>」";
+      openBtn.addEventListener("click", () => {
+        alert(
+          `請按照下列步驟：\n\n1. 點${name}畫面右上角 ⋯ 選單\n2. 找「在 Safari 開啟」或「以瀏覽器開啟」\n3. 點下去就會切到 Safari\n\n（Apple 不允許網頁自動切換瀏覽器，必須手動）`
+        );
+      });
+    } else {
+      // 其他作業系統 → 隱藏按鈕,只顯示複製網址
+      openBtn.style.display = "none";
+    }
 
     copyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(location.href);
-        copyBtn.textContent = "✅ 已複製";
-        setTimeout(() => (copyBtn.textContent = "📋 複製此頁網址"), 2000);
       } catch {
-        // fallback：選取 url 給使用者長按複製
         const ta = document.createElement("textarea");
         ta.value = location.href;
         ta.style.position = "fixed";
@@ -91,9 +114,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         ta.select();
         document.execCommand("copy");
         document.body.removeChild(ta);
-        copyBtn.textContent = "✅ 已複製";
-        setTimeout(() => (copyBtn.textContent = "📋 複製此頁網址"), 2000);
       }
+      copyBtn.textContent = "✅ 已複製";
+      setTimeout(() => (copyBtn.textContent = "📋 複製網址"), 2000);
     });
   }
 
