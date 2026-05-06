@@ -58,6 +58,22 @@ document.addEventListener("DOMContentLoaded", () => {
     loginPanel.hidden = true;
     settingsPanel.hidden = false;
     populateForm();
+    // 第一次登入沒 R2 config ID → 自動上傳一次,讓 share URL 立刻變短
+    ensureR2Config();
+  }
+
+  // 確保 R2 上有目前 config,share URL 才會用 ?id= 短格式
+  async function ensureR2Config() {
+    if (AppConfig.getConfigId()) return; // 已有 ID
+    try {
+      const cfg = readForm();
+      AppConfig.save(cfg);
+      await AppConfig.saveConfigToR2(cfg, UPLOAD_TOKEN);
+      refreshShare(cfg);
+    } catch (e) {
+      console.warn("[ensureR2Config] failed:", e);
+      // 失敗就維持 fallback 長 URL,使用者點儲存還能再試
+    }
   }
 
   function populateForm() {
@@ -193,7 +209,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       done++;
     }
-    imageStatus.textContent = `✅ 上傳完成 ${done} 張（記得按下方「儲存設定」才會永久保留）`;
+    imageStatus.textContent = `✅ 上傳完成 ${done} 張`;
+
+    // 自動同步到 R2 config,讓 share URL/QR 立刻反映新照片(不用等使用者點儲存)
+    try {
+      const cfg = readForm();
+      AppConfig.save(cfg);
+      await AppConfig.saveConfigToR2(cfg, UPLOAD_TOKEN);
+      refreshShare(cfg);
+    } catch (e) {
+      console.warn("[handleFiles] auto-save failed:", e);
+      imageStatus.textContent += "（連結尚未同步,請點儲存設定）";
+    }
   }
 
   async function deleteImage(idx) {
@@ -213,7 +240,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     images.splice(idx, 1);
     renderImages();
-    refreshShare(readForm());
+    // 自動同步到 R2 config
+    try {
+      const cfg = readForm();
+      AppConfig.save(cfg);
+      await AppConfig.saveConfigToR2(cfg, UPLOAD_TOKEN);
+      refreshShare(cfg);
+    } catch (e) {
+      console.warn("[deleteImage] auto-save failed:", e);
+      refreshShare(readForm()); // 至少更新 UI
+    }
   }
 
   function renderImages() {
@@ -364,17 +400,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 複製分享連結
   copyShareBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrlEl.value);
-      copyShareBtn.textContent = "✅ 已複製";
-      setTimeout(() => (copyShareBtn.textContent = "📋 複製"), 2000);
-    } catch {
-      shareUrlEl.select();
-      document.execCommand("copy");
-      copyShareBtn.textContent = "✅ 已複製";
-      setTimeout(() => (copyShareBtn.textContent = "📋 複製"), 2000);
-    }
+    const ok = await copyText(shareUrlEl.value);
+    copyShareBtn.textContent = ok ? "✅ 已複製" : "⚠️ 複製失敗";
+    setTimeout(() => (copyShareBtn.textContent = "📋 複製"), 2000);
   });
+
+  // 共用複製函式 (剪貼簿 API + textarea fallback)
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
 
   // 即時預覽 Google URL 轉換結果
   googleEl.addEventListener("input", refreshGooglePreview);
@@ -464,11 +516,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const item = bulkResults[i];
     if (!item) return;
     if (btn.dataset.act === "copy") {
-      try {
-        await navigator.clipboard.writeText(item.url);
-        btn.textContent = "✅ 已複製";
-        setTimeout(() => (btn.textContent = "📋 複製連結"), 2000);
-      } catch {}
+      const ok = await copyText(item.url);
+      btn.textContent = ok ? "✅ 已複製" : "⚠️ 複製失敗";
+      setTimeout(() => (btn.textContent = "📋 複製連結"), 2000);
     } else if (btn.dataset.act === "download") {
       try {
         const r = await fetch(item.qrUrl);
@@ -518,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bulkDownloadAllBtn.textContent = "下載失敗";
     } finally {
       setTimeout(() => {
-        bulkDownloadAllBtn.textContent = "⬇ 下載全部 QR (zip)";
+        bulkDownloadAllBtn.textContent = "⬇ 下載全部 QR";
         bulkDownloadAllBtn.disabled = false;
       }, 2500);
     }

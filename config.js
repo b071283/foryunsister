@@ -135,10 +135,11 @@ window.AppConfig = (() => {
     return load();
   }
 
-  // ?p=員工名 (encoded) → 覆蓋 person 欄位 (用於批次 QR 共用同一個 base config)
+  // ?p=員工名 → 覆蓋 person 欄位 (用於批次 QR 共用同一個 base config)
+  // 注意:URLSearchParams.get 會自動 url-decode,不需再 decodeURIComponent (會 double-decode 出錯)
   function applyOverrides(cfg, params) {
     const p = params.get("p");
-    if (p) cfg.person = decodeURIComponent(p);
+    if (p) cfg.person = p;
     return cfg;
   }
 
