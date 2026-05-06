@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const shareUrlEl = document.getElementById("share-url");
   const copyShareBtn = document.getElementById("copy-share-btn");
   const previewLink = document.getElementById("preview-link");
+  const googlePreviewEl = document.getElementById("google-preview");
+  const googlePreviewUrlEl = document.getElementById("google-preview-url");
+  const googlePreviewStatusEl = document.getElementById(
+    "google-preview-status"
+  );
 
   function showLogin() {
     loginPanel.hidden = false;
@@ -41,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     feelingsEl.value = (cfg.feelings || []).join("\n");
     newpassEl.value = "";
     refreshShare(cfg);
+    refreshGooglePreview();
   }
 
   function readForm() {
@@ -61,6 +67,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = AppConfig.buildShareUrl(cfg);
     shareUrlEl.value = url;
     previewLink.href = url;
+  }
+
+  function refreshGooglePreview() {
+    const raw = googleEl.value.trim();
+    if (!raw) {
+      googlePreviewEl.hidden = true;
+      return;
+    }
+    googlePreviewEl.hidden = false;
+    const normalized = AppConfig.normalizeReviewUrl(raw);
+    googlePreviewUrlEl.textContent = normalized;
+    if (AppConfig.isWriteReviewUrl(normalized)) {
+      googlePreviewStatusEl.textContent =
+        "✅ 客戶會直接跳到「寫評論」頁面（不會卡在地圖）";
+      googlePreviewStatusEl.dataset.ok = "1";
+    } else if (
+      /maps\.app\.goo\.gl|goo\.gl\/maps/i.test(raw) &&
+      normalized === raw
+    ) {
+      googlePreviewStatusEl.textContent =
+        "⚠️ 偵測到短網址，無法自動展開。請改貼完整 Google Maps 網址（網址列那段長的）";
+      googlePreviewStatusEl.dataset.ok = "0";
+    } else {
+      googlePreviewStatusEl.textContent =
+        "⚠️ 沒抓到店家 ID，客戶可能會跳到地圖頁而不是評論頁。建議改用商家後台的「分享評論連結」";
+      googlePreviewStatusEl.dataset.ok = "0";
+    }
   }
 
   // 登入
@@ -117,6 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => (copyShareBtn.textContent = "📋 複製"), 2000);
     }
   });
+
+  // 即時預覽 Google URL 轉換結果
+  googleEl.addEventListener("input", refreshGooglePreview);
 
   // 啟動
   if (AppConfig.isLoggedIn()) {

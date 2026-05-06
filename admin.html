@@ -54,10 +54,33 @@
         <div class="form-section">
           <h3 class="form-section-title">Google 評論連結</h3>
           <label class="field">
-            <span class="field-label">Google 評論網址</span>
-            <input type="url" id="set-google" placeholder="https://g.page/r/..." />
-            <span class="field-hint">在 Google 商家檔案 → 取得評論連結 即可複製</span>
+            <span class="field-label">Google 商家網址 / 評論連結 / Place ID</span>
+            <input type="text" id="set-google" placeholder="貼你的 Google Maps 店家頁網址即可" />
+            <span class="field-hint">系統會自動抽出店家 ID，把客戶導去「直接寫評論」的頁面（不是只到地圖）</span>
           </label>
+          <div id="google-preview" class="google-preview" hidden>
+            <span class="google-preview-label">客戶會被導到：</span>
+            <code id="google-preview-url"></code>
+            <p id="google-preview-status" class="google-preview-status"></p>
+          </div>
+          <details class="help-details">
+            <summary>怎麼拿到網址？</summary>
+            <div class="help-body">
+              <p><strong>最簡單 — 直接複製商家頁網址：</strong></p>
+              <ol>
+                <li>Google 搜尋你的店家 → 點進 Google Maps 店家頁</li>
+                <li>網址列複製整段（例：<code>https://www.google.com/maps/place/.../@.../data=...</code>）</li>
+                <li>貼進上面框 ✓</li>
+              </ol>
+              <p><strong>更直接 — 從商家後台拿評論連結：</strong></p>
+              <ol>
+                <li>進 <a href="https://business.google.com/" target="_blank" rel="noopener">business.google.com</a></li>
+                <li>選你的店家 → 「取得更多評論」 / 「分享評論連結」</li>
+                <li>複製 <code>https://g.page/r/...</code> 貼進來</li>
+              </ol>
+              <p class="warn-text">⚠ 短網址 <code>maps.app.goo.gl/...</code> 不支援自動展開，請改用上面兩種方式。</p>
+            </div>
+          </details>
         </div>
 
         <div class="form-section">

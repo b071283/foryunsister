@@ -93,7 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("⚠️ 管理員尚未設定 Google 評論連結，請先到管理員頁面設定");
       return;
     }
-    window.open(cfg.googleUrl, "_blank", "noopener");
+    const url = AppConfig.normalizeReviewUrl(cfg.googleUrl);
+    window.open(url, "_blank", "noopener");
   });
 
   closeBtn.addEventListener("click", () => {
