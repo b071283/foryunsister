@@ -15,8 +15,9 @@ window.AppConfig = (() => {
     pronoun: "她",
     clinic: "青熙美學診所",
     address: "台中市南屯區益昌一街37號1樓",
-    googleUrl:
-      "https://www.google.com/maps/place/%E9%9D%92%E7%86%99%E7%BE%8E%E5%AD%B8%E8%A8%BA%E6%89%80/@24.1385039,120.6332114,17z/data=!3m1!4b1!4m6!3m5!1s0x34693df6e7682a5d:0x223a9200e0fdb18a!8m2!3d24.1385039!4d120.6332114!16s%2Fg%2F11s5twf6hf",
+    // g.page 連結 — 桌機 + 手機(含 Maps APP 已裝)都直達寫評論表單
+    // 這是唯一能 100% 跳過地圖頁的 URL 格式（Google Business Profile「分享評論連結」）
+    googleUrl: "https://g.page/r/CfKTl2HhE3zMEBM/review",
     tagline: "用專業陪伴你，變美更安心",
     thankYou: "謝謝你的信任與分享\n每一份回饋，都是{name}繼續用心服務的動力",
     bottomSlogan: "美麗的事，交給專業｜安心的事，交給{name}",
