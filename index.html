@@ -2,40 +2,75 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>專屬評價</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="container">
-    <h1 class="title" id="title">✨ 專屬評價</h1>
+  <div class="bg-deco">
+    <span class="bg-blob bg-blob-1"></span>
+    <span class="bg-blob bg-blob-2"></span>
+    <span class="bg-spark bg-spark-1">✦</span>
+    <span class="bg-spark bg-spark-2">✦</span>
+    <span class="bg-spark bg-spark-3">+</span>
+    <span class="bg-spark bg-spark-4">+</span>
+  </div>
 
-    <section class="clinic-card">
-      <p class="clinic-name" id="clinic-name">📍 載入中…</p>
+  <main class="container">
+    <header class="brand">
+      <div class="brand-mark" id="brand-mark">勻勻 <span class="brand-heart">♡</span></div>
+      <div class="brand-sub" id="brand-sub">YUN YUN</div>
+      <h1 class="brand-title" id="title">勻勻醫美諮詢服務</h1>
+      <p class="brand-tagline" id="tagline">用專業陪伴你，變美更安心 ♡</p>
+    </header>
+
+    <section class="clinic-card" id="clinic-card">
+      <div class="clinic-card-deco" aria-hidden="true">❀</div>
+      <p class="clinic-name" id="clinic-name"></p>
       <p class="clinic-address" id="clinic-address"></p>
     </section>
 
     <section class="group" id="group-pros">
       <div class="group-head">
-        <h2 class="group-title">推薦的優點</h2>
+        <h2 class="group-title">
+          <span class="group-icon">♛</span>
+          <span id="group-pros-label">為什麼選擇勻勻</span>
+          <span class="group-multi">（多選）</span>
+        </h2>
         <span class="group-meta"><span class="count" data-count="pros">0</span> 已選 · 至少選 1 個</span>
       </div>
-      <div class="tag-grid" data-group="pros"></div>
+      <div class="tag-list" data-group="pros"></div>
     </section>
 
     <section class="group" id="group-feelings">
       <div class="group-head">
-        <h2 class="group-title">當天服務感受</h2>
+        <h2 class="group-title">
+          <span class="group-icon">♥</span>
+          <span>當天體驗感受</span>
+          <span class="group-multi">（多選）</span>
+        </h2>
         <span class="group-meta"><span class="count" data-count="feelings">0</span> 已選 · 至少選 1 個</span>
       </div>
-      <div class="tag-grid" data-group="feelings"></div>
+      <div class="tag-list" data-group="feelings"></div>
     </section>
 
     <section class="actions" id="actions">
       <button id="submit-btn" type="button" class="primary-btn">送出評價</button>
       <p class="actions-hint">兩段都至少選 1 項才能送出</p>
     </section>
+
+    <section class="thanks-card" id="thanks-card">
+      <div class="thanks-icon" aria-hidden="true">✉</div>
+      <p class="thanks-text" id="thank-you-text"></p>
+      <p class="thanks-sign" id="thank-you-sign">— 勻勻</p>
+    </section>
   </main>
+
+  <footer class="bottom-slogan" id="bottom-slogan">
+    <span class="slogan-spark">✧</span>
+    <span id="slogan-text">美麗的事，交給專業｜安心的事，交給勻勻</span>
+    <span class="slogan-heart">♥</span>
+  </footer>
 
   <div id="result-modal" class="modal" hidden>
     <div class="modal-card">
@@ -47,10 +82,15 @@
         <pre id="comment-preview" class="comment-box"></pre>
       </div>
 
+      <div class="modal-section" id="image-picker-section" hidden>
+        <p class="modal-label">選擇要附上的照片（會自動下載到手機）</p>
+        <div id="image-picker" class="image-picker"></div>
+      </div>
+
       <ol class="step-list">
-        <li><strong>已自動複製評論到剪貼簿</strong>（如果沒成功，點下方「複製」）</li>
-        <li>點「前往 Google 評論」會開新分頁</li>
-        <li>在 Google 評論頁：<span class="hint">選 5 顆星 → Ctrl+V 貼上 → 送出</span></li>
+        <li><strong>已自動複製評論到剪貼簿</strong>（沒成功就點「複製評論」）</li>
+        <li>點「前往 Google 評論」<span id="step-image-hint" hidden>會自動下載你勾選的照片，再開新分頁</span><span id="step-no-image-hint">會開新分頁</span></li>
+        <li>在 Google 評論頁：<span class="hint">點 5 顆星 → Ctrl+V 貼文字 <span id="step-image-photo" hidden>→ 上傳剛下載的照片</span> → 送出</span></li>
       </ol>
 
       <div class="modal-actions">

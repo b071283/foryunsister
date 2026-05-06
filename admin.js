@@ -1,3 +1,7 @@
+// 上傳專用密碼 — 只在 admin.html 載入,客戶端 (index.html) 完全看不到
+// Worker 同時用 Origin 白名單保護,雙層防護
+const UPLOAD_TOKEN = "fys_2026_5e8a3c7d4f1b6a9e_upload";
+
 document.addEventListener("DOMContentLoaded", () => {
   const loginPanel = document.getElementById("login-panel");
   const settingsPanel = document.getElementById("settings-panel");
@@ -9,9 +13,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const personEl = document.getElementById("set-person");
   const titleEl = document.getElementById("set-title");
+  const serviceLabelEl = document.getElementById("set-service-label");
   const pronounEl = document.getElementById("set-pronoun");
   const clinicEl = document.getElementById("set-clinic");
   const addressEl = document.getElementById("set-address");
+  const taglineEl = document.getElementById("set-tagline");
+  const thankYouEl = document.getElementById("set-thank-you");
+  const bottomSloganEl = document.getElementById("set-bottom-slogan");
   const googleEl = document.getElementById("set-google");
   const prosEl = document.getElementById("set-pros");
   const feelingsEl = document.getElementById("set-feelings");
@@ -22,6 +30,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewLink = document.getElementById("preview-link");
   const qrImg = document.getElementById("qr-img");
   const downloadQrBtn = document.getElementById("download-qr-btn");
+  const imageInput = document.getElementById("image-input");
+  const imageDrop = document.getElementById("image-drop");
+  const imageGrid = document.getElementById("image-grid");
+  const imageStatus = document.getElementById("image-status");
+
+  // 內部狀態:目前已上傳圖片清單 [{key, url}]
+  let images = [];
   const googlePreviewEl = document.getElementById("google-preview");
   const googlePreviewUrlEl = document.getElementById("google-preview-url");
   const googlePreviewStatusEl = document.getElementById(
@@ -44,13 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const cfg = AppConfig.load();
     personEl.value = cfg.person || "";
     titleEl.value = cfg.title || "";
+    serviceLabelEl.value = cfg.serviceLabel || "";
     pronounEl.value = cfg.pronoun || "";
     clinicEl.value = cfg.clinic || "";
     addressEl.value = cfg.address || "";
+    taglineEl.value = cfg.tagline || "";
+    thankYouEl.value = cfg.thankYou || "";
+    bottomSloganEl.value = cfg.bottomSlogan || "";
     googleEl.value = cfg.googleUrl || "";
     prosEl.value = (cfg.pros || []).join("\n");
     feelingsEl.value = (cfg.feelings || []).join("\n");
     newpassEl.value = "";
+    images = Array.isArray(cfg.images) ? [...cfg.images] : [];
+    renderImages();
     refreshShare(cfg);
     refreshGooglePreview();
   }
@@ -59,16 +80,156 @@ document.addEventListener("DOMContentLoaded", () => {
     return {
       person: personEl.value.trim(),
       title: titleEl.value.trim(),
+      serviceLabel: serviceLabelEl.value.trim(),
       pronoun: pronounEl.value.trim() || "她",
       clinic: clinicEl.value.trim(),
       address: addressEl.value.trim(),
+      tagline: taglineEl.value.trim(),
+      thankYou: thankYouEl.value,
+      bottomSlogan: bottomSloganEl.value.trim(),
       googleUrl: googleEl.value.trim(),
       pros: prosEl.value.split("\n").map((s) => s.trim()).filter(Boolean),
       feelings: feelingsEl.value
         .split("\n")
         .map((s) => s.trim())
-        .filter(Boolean)
+        .filter(Boolean),
+      images: [...images]
     };
+  }
+
+  // ----- 圖片上傳 -----
+  const MAX_IMAGES = 8;
+  const MAX_DIM = 1400; // 長邊上限
+  const QUALITY = 0.82;
+
+  async function compressImage(file) {
+    const dataUrl = await readFileAsDataUrl(file);
+    const img = await loadImage(dataUrl);
+    let { naturalWidth: w, naturalHeight: h } = img;
+    if (w > MAX_DIM || h > MAX_DIM) {
+      const scale = Math.min(MAX_DIM / w, MAX_DIM / h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
+        "image/jpeg",
+        QUALITY
+      )
+    );
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+  function loadImage(src) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = rej;
+      img.src = src;
+    });
+  }
+
+  async function uploadOne(blob) {
+    const r = await fetch(`${AppConfig.WORKER_URL}/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": blob.type || "image/jpeg",
+        "X-Admin-Pass": UPLOAD_TOKEN
+      },
+      body: blob
+    });
+    const data = await r.json();
+    if (!r.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${r.status}`);
+    }
+    return { key: data.key, url: data.url };
+  }
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList).filter((f) =>
+      f.type.startsWith("image/")
+    );
+    if (files.length === 0) return;
+    if (images.length + files.length > MAX_IMAGES) {
+      imageStatus.textContent = `⚠️ 最多 ${MAX_IMAGES} 張,目前已有 ${images.length} 張`;
+      imageStatus.dataset.ok = "0";
+      return;
+    }
+
+    imageStatus.dataset.ok = "1";
+    let done = 0;
+    for (const file of files) {
+      imageStatus.textContent = `上傳中… (${done + 1}/${files.length}) ${file.name}`;
+      try {
+        const blob = await compressImage(file);
+        const result = await uploadOne(blob);
+        images.push(result);
+        renderImages();
+        // 馬上把分享連結也更新（即使還沒按儲存,讓 admin 看到 QR 變化）
+        refreshShare(readForm());
+      } catch (e) {
+        console.error(e);
+        imageStatus.textContent = `❌ ${file.name} 上傳失敗:${e.message}`;
+        imageStatus.dataset.ok = "0";
+        return;
+      }
+      done++;
+    }
+    imageStatus.textContent = `✅ 上傳完成 ${done} 張（記得按下方「儲存設定」才會永久保留）`;
+  }
+
+  async function deleteImage(idx) {
+    const img = images[idx];
+    if (!img) return;
+    if (!confirm("確定要刪除這張照片嗎？")) return;
+    try {
+      const r = await fetch(
+        `${AppConfig.WORKER_URL}/image/${encodeURIComponent(img.key)}`,
+        { method: "DELETE", headers: { "X-Admin-Pass": UPLOAD_TOKEN } }
+      );
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || `HTTP ${r.status}`);
+    } catch (e) {
+      console.error(e);
+      // 即使遠端刪除失敗,也從本地清單移除（admin 不會想看到不要的圖）
+    }
+    images.splice(idx, 1);
+    renderImages();
+    refreshShare(readForm());
+  }
+
+  function renderImages() {
+    imageGrid.innerHTML = "";
+    images.forEach((img, idx) => {
+      const cell = document.createElement("div");
+      cell.className = "image-cell";
+      const im = document.createElement("img");
+      im.src = img.url;
+      im.alt = `照片 ${idx + 1}`;
+      im.loading = "lazy";
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "image-del";
+      del.textContent = "×";
+      del.title = "刪除";
+      del.addEventListener("click", () => deleteImage(idx));
+      cell.appendChild(im);
+      cell.appendChild(del);
+      imageGrid.appendChild(cell);
+    });
   }
 
   function refreshShare(cfg) {
@@ -202,6 +363,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // QR 下載
   downloadQrBtn.addEventListener("click", downloadQR);
+
+  // 圖片上傳
+  imageInput.addEventListener("change", (e) => {
+    handleFiles(e.target.files);
+    e.target.value = ""; // 允許重複選同檔
+  });
+  ["dragenter", "dragover"].forEach((evt) =>
+    imageDrop.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      imageDrop.classList.add("drag-over");
+    })
+  );
+  ["dragleave", "drop"].forEach((evt) =>
+    imageDrop.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      imageDrop.classList.remove("drag-over");
+    })
+  );
+  imageDrop.addEventListener("drop", (e) => {
+    if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+  });
 
   // 啟動
   if (AppConfig.isLoggedIn()) {

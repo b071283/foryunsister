@@ -4,39 +4,66 @@ window.AppConfig = (() => {
   const PASS_KEY = "foryunsister_admin_pass_v1";
   const SESSION_KEY = "foryunsister_admin_session";
 
+  const WORKER_URL = "https://foryunsister-upload.rxrxttb.workers.dev";
+
   const DEFAULT = {
-    person: "",
-    title: "醫美師",
+    person: "勻勻",
+    title: "醫美諮詢師",
+    serviceLabel: "醫美諮詢服務",
     pronoun: "她",
     clinic: "",
     address: "",
     googleUrl: "",
+    tagline: "用專業陪伴你，變美更安心",
+    thankYou: "謝謝你的信任與分享\n每一份回饋，都是{name}繼續用心服務的動力",
+    bottomSlogan: "美麗的事，交給專業｜安心的事，交給{name}",
+    images: [], // [{key, url}]
     pros: [
-      "講解細緻清晰",
-      "減法建議不推銷",
-      "新手友善沒壓力",
-      "審美自然有質感",
-      "觀察力極強",
-      "流程專業誠懇",
-      "動作輕柔穩定",
-      "術後衛教專業",
-      "風險告知坦白",
-      "溝通非常有溫度"
+      "👤 客製化評估，不制式推療程",
+      "💬 全程陪同說明，不讓你有距離感",
+      "💰 依預算給建議，不硬推高單價",
+      "🩺 操作醫師風格會先幫你評估適合度",
+      "💗 新手也能安心了解療程",
+      "📅 術前術後都會追蹤關心",
+      "✨ 重視自然感，不做過度改變",
+      "🛡️ 風險與恢復期講清楚",
+      "👁️ 細節觀察到位（臉型／比例／狀態）",
+      "👫 溝通不尷尬，像朋友但有專業"
     ],
     feelings: [
-      "全程放鬆不緊張",
-      "被細心呵護感",
-      "諮詢後很安心",
-      "聊天氛圍很愉快",
-      "環境隱私感極佳",
-      "效果立即有感",
-      "錢花得很值得",
-      "下次絕對再預約",
-      "超出預期的質感",
-      "被溫柔對待的感覺",
-      "整體質感非常好"
+      "🌿 過程輕鬆，沒有壓力",
+      "💗 被理解需求，給的建議很實在",
+      "💬 很有耐心，仔細解說",
+      "✅ 整體流程順暢不混亂",
+      "🛋️ 環境舒適，讓人放鬆",
+      "🌟 當下就有想變美的動力",
+      "💡 諮詢專業，解答清楚",
+      "💲 價格透明，沒有隱藏費用",
+      "🔒 隱私保護做得很好",
+      "😊 期待下次再來"
     ]
   };
+
+  // 從一行字解析「icon 文字」格式 → {icon, text}
+  function parseTag(line) {
+    const trimmed = String(line || "").trim();
+    if (!trimmed) return null;
+    const idx = trimmed.indexOf(" ");
+    if (idx === -1) return { icon: "", text: trimmed };
+    const head = trimmed.slice(0, idx);
+    const rest = trimmed.slice(idx + 1).trim();
+    // head 看起來像 emoji / 符號（不含中英數）→ 視為 icon
+    if (head.length <= 4 && !/[一-鿿A-Za-z0-9]/.test(head)) {
+      return { icon: head, text: rest };
+    }
+    return { icon: "", text: trimmed };
+  }
+
+  // 把 {name} 之類的佔位字替換掉
+  function template(str, vars) {
+    if (!str) return "";
+    return String(str).replace(/\{(\w+)\}/g, (_, k) => vars[k] || "");
+  }
 
   // UTF-8 safe URL-safe Base64
   function encodeConfig(obj) {
@@ -183,6 +210,7 @@ window.AppConfig = (() => {
 
   return {
     DEFAULT,
+    WORKER_URL,
     load,
     save,
     getPassword,
@@ -194,6 +222,8 @@ window.AppConfig = (() => {
     encodeConfig,
     decodeConfig,
     normalizeReviewUrl,
-    isWriteReviewUrl
+    isWriteReviewUrl,
+    parseTag,
+    template
   };
 })();

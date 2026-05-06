@@ -1,0 +1,9 @@
+{
+  "main_module": "index.js",
+  "compatibility_date": "2026-05-01",
+  "bindings": [
+    {"type": "r2_bucket", "name": "IMAGES", "bucket_name": "foryunsister-images"},
+    {"type": "plain_text", "name": "PUBLIC_BASE", "text": "https://pub-fe48d0757d44404188398c4b0f1c3d76.r2.dev"},
+    {"type": "secret_text", "name": "ADMIN_PASS", "text": "fys_2026_5e8a3c7d4f1b6a9e_upload"}
+  ]
+}

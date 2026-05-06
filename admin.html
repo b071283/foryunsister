@@ -47,6 +47,11 @@
             <span class="field-hint">評論裡會寫成「大推{職稱}{姓名}！」</span>
           </label>
           <label class="field">
+            <span class="field-label">服務名稱</span>
+            <input type="text" id="set-service-label" placeholder="例：醫美諮詢服務" />
+            <span class="field-hint">頁面標題會顯示成「{姓名}{服務名稱}」</span>
+          </label>
+          <label class="field">
             <span class="field-label">代名詞</span>
             <input type="text" id="set-pronoun" placeholder="例：她、他" maxlength="2" />
             <span class="field-hint">評論裡會寫成「{代名詞}服務真的很...」</span>
@@ -58,6 +63,23 @@
           <label class="field">
             <span class="field-label">地址</span>
             <input type="text" id="set-address" placeholder="例：台中市南屯區益昌一街37號1樓" />
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">品牌文案</h3>
+          <label class="field">
+            <span class="field-label">標題下方副標</span>
+            <input type="text" id="set-tagline" placeholder="例：用專業陪伴你，變美更安心" />
+          </label>
+          <label class="field">
+            <span class="field-label">頁尾感謝訊息</span>
+            <textarea id="set-thank-you" rows="3" placeholder="例：謝謝你的信任與分享&#10;每一份回饋，都是{name}繼續用心服務的動力"></textarea>
+            <span class="field-hint">用 <code>{name}</code> 代表你的姓名（會自動代入）</span>
+          </label>
+          <label class="field">
+            <span class="field-label">最底部標語</span>
+            <input type="text" id="set-bottom-slogan" placeholder="例：美麗的事，交給專業｜安心的事，交給{name}" />
           </label>
         </div>
 
@@ -91,6 +113,23 @@
               <p class="warn-text">⚠ 短網址 <code>maps.app.goo.gl/...</code> 不支援自動展開，請改用上面兩種方式。</p>
             </div>
           </details>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">推薦照片</h3>
+          <p class="hint">客戶送出評價時，可以勾選照片自動下載到手機，再上傳到 Google 評論。最多 8 張，每張壓縮後約 200–500 KB。</p>
+          <div class="image-uploader">
+            <label class="image-drop" id="image-drop">
+              <input type="file" id="image-input" accept="image/*" multiple hidden />
+              <div class="image-drop-content">
+                <span class="image-drop-icon">📷</span>
+                <span class="image-drop-text">點這裡或拖曳照片進來</span>
+                <span class="image-drop-sub">支援 JPG / PNG / WebP，自動壓縮</span>
+              </div>
+            </label>
+            <p id="image-status" class="copy-status" aria-live="polite"></p>
+            <div id="image-grid" class="image-grid"></div>
+          </div>
         </div>
 
         <div class="form-section">
