@@ -4,7 +4,9 @@
 
 ## 預覽
 
-本機開啟 `index.html` 即可，或部屬到 GitHub Pages。
+- 正式網址：<https://sister.socialcontactapp.net>
+- GitHub Pages 原始網址：<https://b071283.github.io/foryunsister/>
+- 本機：直接開啟 `index.html`
 
 ## 結構
 
