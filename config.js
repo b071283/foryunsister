@@ -134,70 +134,64 @@ window.AppConfig = (() => {
     sessionStorage.removeItem(SESSION_KEY);
   }
 
-  // 把 admin 貼的各種 Google 連結（包含一般地圖店家頁）轉成「直接打開寫評論頁」
-  // 支援:
-  //   - 純 Place ID: ChIJxxxxx
-  //   - 純 FTID: 0xHEX:0xHEX
-  //   - 含 ?placeid= 或 ?place_id= 的 URL
-  //   - Google Maps 店家頁 URL（從 !1s0xHEX:0xHEX 或 data 區段抽 FTID）
-  //   - 已是 writereview / g.page/r 連結（原樣返回）
-  // 不支援:
-  //   - maps.app.goo.gl / goo.gl/maps 短網址（純前端無法展開,直接打開會到地圖頁）
+  // 把 admin 貼的各種 Google 連結轉成最佳的目標 URL
+  //
+  // 重要：Google writereview 只接受 ChIJ 格式 Place ID,FTID (0x...:0x...) 會回 404！
+  // 所以對 Maps 店家頁 URL（FTID 格式）我們**不轉成 writereview**,
+  // 直接傳店家頁 URL 過去,讓客戶看到店家頁後點「撰寫評論」進入。
+  //
+  // 真正會「直達評論表單」的只有兩種格式:
+  //   - g.page/r/.../review     ← 商家後台「分享評論連結」
+  //   - writereview?placeid=ChIJ... ← 真實 Place ID（不是 FTID）
   function normalizeReviewUrl(input) {
     if (!input) return "";
     const trimmed = input.trim();
 
-    // 1. 純 Place ID
+    // 已是直達格式 → 原樣返回
+    if (/^https?:\/\/g\.page\/r\//i.test(trimmed)) return trimmed;
+    if (/search\.google\.com\/local\/writereview\?placeid=ChIJ/i.test(trimmed))
+      return trimmed;
+
+    // 純 ChIJ Place ID → 組成 writereview（這個格式 Google 接受）
     if (/^ChIJ[\w-]{20,}$/.test(trimmed)) {
       return `https://search.google.com/local/writereview?placeid=${trimmed}`;
     }
 
-    // 2. 純 FTID 格式（0xHEX:0xHEX）
-    if (/^0x[\da-f]+:0x[\da-f]+$/i.test(trimmed)) {
-      return `https://search.google.com/local/writereview?placeid=${trimmed}`;
-    }
-
-    // 3. 已是 writereview / g.page 連結 → 原樣
-    if (/search\.google\.com\/local\/writereview/i.test(trimmed)) {
-      return trimmed;
-    }
-    if (/^https?:\/\/g\.page\/r\//i.test(trimmed)) {
-      return trimmed;
-    }
-
-    // 4. URL 含 placeid / place_id 參數
+    // URL 中含 ChIJ 格式 placeid → writereview
     try {
       const url = new URL(trimmed);
       const pid =
         url.searchParams.get("placeid") || url.searchParams.get("place_id");
-      if (pid) {
+      if (pid && /^ChIJ[\w-]{20,}$/.test(pid)) {
         return `https://search.google.com/local/writereview?placeid=${pid}`;
       }
     } catch {}
-
-    // 5. 從整段 URL 抽 FTID 模式（最常見：Google Maps 店家頁的 !1s0xHEX:0xHEX）
-    const ftid = trimmed.match(/0x[\da-f]+:0x[\da-f]+/i);
-    if (ftid) {
-      return `https://search.google.com/local/writereview?placeid=${ftid[0]}`;
+    const chijIn = trimmed.match(/ChIJ[\w-]{20,}/);
+    if (chijIn) {
+      return `https://search.google.com/local/writereview?placeid=${chijIn[0]}`;
     }
 
-    // 6. ChIJ Place ID 藏在 URL 任意位置
-    const pidIn = trimmed.match(/ChIJ[\w-]{20,}/);
-    if (pidIn) {
-      return `https://search.google.com/local/writereview?placeid=${pidIn[0]}`;
-    }
-
-    // 7. 短網址或無法解析 → 原樣（會到地圖頁,提示在 admin 端顯示）
+    // 其他（Maps /place/...、FTID URL、純 FTID、短網址等）→ 原樣
+    // 客戶會到店家頁,需要再點「撰寫評論」按鈕
     return trimmed;
   }
 
-  // 判斷 normalize 是否真的轉成了寫評論連結（給 admin 端做顯示）
+  // 判斷 URL 是否會「直達寫評論表單」（不需客戶再點按鈕）
   function isWriteReviewUrl(url) {
     if (!url) return false;
     return (
-      /search\.google\.com\/local\/writereview/i.test(url) ||
-      /^https?:\/\/g\.page\/r\//i.test(url)
+      /^https?:\/\/g\.page\/r\//i.test(url) ||
+      /search\.google\.com\/local\/writereview\?placeid=ChIJ/i.test(url)
     );
+  }
+
+  // 判斷 URL 是否會抵達「正確的店家頁」（不會 404,但需點「撰寫評論」進入）
+  function isPlacePageUrl(url) {
+    if (!url) return false;
+    if (isWriteReviewUrl(url)) return false; // 直達是更好的
+    if (/google\.com\/maps\/place\//i.test(url)) return true;
+    if (/0x[\da-f]+:0x[\da-f]+/i.test(url)) return true; // 含 FTID 的任何 URL
+    return false;
   }
 
   function buildShareUrl(cfg) {
@@ -224,6 +218,7 @@ window.AppConfig = (() => {
     decodeConfig,
     normalizeReviewUrl,
     isWriteReviewUrl,
+    isPlacePageUrl,
     parseTag,
     template
   };

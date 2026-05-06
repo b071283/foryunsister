@@ -294,6 +294,10 @@ document.addEventListener("DOMContentLoaded", () => {
       googlePreviewStatusEl.textContent =
         "✅ 客戶會直接跳到「寫評論」頁面（不會卡在地圖）";
       googlePreviewStatusEl.dataset.ok = "1";
+    } else if (AppConfig.isPlacePageUrl(normalized)) {
+      googlePreviewStatusEl.textContent =
+        "⚠️ 客戶會到店家頁（不是直接寫評論）。請客戶在頁面上點「撰寫評論」按鈕進入評論表單。如果想客戶免再點一次，請用商家後台的「分享評論連結」(g.page/r/.../review)";
+      googlePreviewStatusEl.dataset.ok = "0";
     } else if (
       /maps\.app\.goo\.gl|goo\.gl\/maps/i.test(raw) &&
       normalized === raw
@@ -303,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
       googlePreviewStatusEl.dataset.ok = "0";
     } else {
       googlePreviewStatusEl.textContent =
-        "⚠️ 沒抓到店家 ID，客戶可能會跳到地圖頁而不是評論頁。建議改用商家後台的「分享評論連結」";
+        "⚠️ 沒抓到店家 ID，客戶可能會跳到搜尋頁。建議改貼完整 Google Maps 店家網址（含 /place/ 那種）";
       googlePreviewStatusEl.dataset.ok = "0";
     }
   }
