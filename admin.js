@@ -30,6 +30,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewLink = document.getElementById("preview-link");
   const qrImg = document.getElementById("qr-img");
   const downloadQrBtn = document.getElementById("download-qr-btn");
+  const bulkNamesEl = document.getElementById("bulk-names");
+  const bulkGenBtn = document.getElementById("bulk-generate-btn");
+  const bulkDownloadAllBtn = document.getElementById("bulk-download-all-btn");
+  const bulkResult = document.getElementById("bulk-result");
+  const bulkStatus = document.getElementById("bulk-status");
   const imageInput = document.getElementById("image-input");
   const imageDrop = document.getElementById("image-drop");
   const imageGrid = document.getElementById("image-grid");
@@ -363,6 +368,144 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // QR 下載
   downloadQrBtn.addEventListener("click", downloadQR);
+
+  // ----- 批次產生員工 QR -----
+  let bulkResults = []; // [{name, url, qrUrl}]
+
+  function generateBulk() {
+    const names = bulkNamesEl.value
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (names.length === 0) {
+      bulkStatus.textContent = "⚠️ 至少輸入一個員工姓名";
+      bulkStatus.dataset.ok = "0";
+      return;
+    }
+    if (names.length > 50) {
+      bulkStatus.textContent = "⚠️ 一次最多 50 位";
+      bulkStatus.dataset.ok = "0";
+      return;
+    }
+
+    const baseCfg = readForm();
+    bulkResults = names.map((name) => {
+      const cfg = { ...baseCfg, person: name };
+      const url = AppConfig.buildShareUrl(cfg);
+      const qrUrl =
+        "https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&format=png&data=" +
+        encodeURIComponent(url);
+      return { name, url, qrUrl };
+    });
+
+    renderBulkResults();
+    bulkDownloadAllBtn.disabled = false;
+    bulkStatus.textContent = `✅ 已產生 ${names.length} 張 QR — 點下載按鈕個別下載,或下載全部`;
+    bulkStatus.dataset.ok = "1";
+  }
+
+  function renderBulkResults() {
+    bulkResult.innerHTML = "";
+    bulkResults.forEach((r, idx) => {
+      const card = document.createElement("div");
+      card.className = "bulk-card";
+      card.innerHTML = `
+        <div class="bulk-qr-frame"><img src="${r.qrUrl}" alt="${escapeHtmlA(r.name)} QR" loading="lazy" /></div>
+        <div class="bulk-info">
+          <div class="bulk-name">${escapeHtmlA(r.name)}</div>
+          <div class="bulk-row">
+            <input type="text" readonly value="${escapeHtmlA(r.url)}" />
+          </div>
+          <div class="bulk-actions-row">
+            <button type="button" class="secondary-btn" data-act="copy" data-i="${idx}">📋 複製連結</button>
+            <button type="button" class="secondary-btn" data-act="download" data-i="${idx}">⬇ 下載 QR</button>
+            <a class="secondary-btn" href="${escapeHtmlA(r.url)}" target="_blank" rel="noopener">👀 預覽</a>
+          </div>
+        </div>
+      `;
+      bulkResult.appendChild(card);
+    });
+  }
+
+  function escapeHtmlA(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[c]);
+  }
+
+  bulkResult.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const i = parseInt(btn.dataset.i, 10);
+    const item = bulkResults[i];
+    if (!item) return;
+    if (btn.dataset.act === "copy") {
+      try {
+        await navigator.clipboard.writeText(item.url);
+        btn.textContent = "✅ 已複製";
+        setTimeout(() => (btn.textContent = "📋 複製連結"), 2000);
+      } catch {}
+    } else if (btn.dataset.act === "download") {
+      try {
+        const r = await fetch(item.qrUrl);
+        const blob = await r.blob();
+        const a = document.createElement("a");
+        const objUrl = URL.createObjectURL(blob);
+        const safe = item.name.replace(/[^\w一-鿿-]/g, "");
+        a.href = objUrl;
+        a.download = `${safe || "QR"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objUrl), 1500);
+        btn.textContent = "✅ 已下載";
+        setTimeout(() => (btn.textContent = "⬇ 下載 QR"), 2000);
+      } catch (err) {
+        window.open(item.qrUrl, "_blank", "noopener");
+      }
+    }
+  });
+
+  async function downloadAllZip() {
+    if (bulkResults.length === 0) return;
+    bulkDownloadAllBtn.disabled = true;
+    bulkDownloadAllBtn.textContent = "下載中…";
+    try {
+      // 沒 zip lib,改個別下載（瀏覽器會在「下載」資料夾收齊）
+      for (let i = 0; i < bulkResults.length; i++) {
+        const item = bulkResults[i];
+        bulkDownloadAllBtn.textContent = `下載中 ${i + 1}/${bulkResults.length}…`;
+        const r = await fetch(item.qrUrl);
+        const blob = await r.blob();
+        const a = document.createElement("a");
+        const objUrl = URL.createObjectURL(blob);
+        const safe = item.name.replace(/[^\w一-鿿-]/g, "");
+        a.href = objUrl;
+        a.download = `${safe || "QR"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objUrl), 1500);
+        await new Promise((r) => setTimeout(r, 250)); // 避免被瀏覽器擋連續下載
+      }
+      bulkDownloadAllBtn.textContent = "✅ 全部已下載";
+    } catch (e) {
+      console.error(e);
+      bulkDownloadAllBtn.textContent = "下載失敗";
+    } finally {
+      setTimeout(() => {
+        bulkDownloadAllBtn.textContent = "⬇ 下載全部 QR (zip)";
+        bulkDownloadAllBtn.disabled = false;
+      }, 2500);
+    }
+  }
+
+  bulkGenBtn.addEventListener("click", generateBulk);
+  bulkDownloadAllBtn.addEventListener("click", downloadAllZip);
 
   // 圖片上傳
   imageInput.addEventListener("change", (e) => {

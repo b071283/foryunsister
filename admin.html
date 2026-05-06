@@ -95,20 +95,23 @@
             <code id="google-preview-url"></code>
             <p id="google-preview-status" class="google-preview-status"></p>
           </div>
-          <details class="help-details">
-            <summary>怎麼拿到網址？</summary>
+          <details class="help-details" open>
+            <summary>📌 重要：手機行為一定要看這裡</summary>
             <div class="help-body">
-              <p><strong>最簡單 — 直接複製商家頁網址：</strong></p>
+              <p><strong>如果想客戶在手機上「直接打開寫評論表單」</strong>，<u>必須</u>用 Google 商家後台的「分享評論連結」(<code>g.page/r/.../review</code> 那種)。其他形式的 URL 在手機 Google Maps APP 會被攔截到地圖店家頁，需要客戶再多點一次「撰寫評論」按鈕。</p>
+              <p><strong>怎麼拿到 g.page 連結（一次設定即可，所有員工 QR 共用）：</strong></p>
+              <ol>
+                <li>登入 <a href="https://business.google.com/" target="_blank" rel="noopener">business.google.com</a>（或請店家負責人代為操作）</li>
+                <li>選店家 → 左欄「<strong>取得更多評論</strong>」 / 「<strong>分享評論連結</strong>」</li>
+                <li>複製出來那條 <code>https://g.page/r/CXXXXX/review</code></li>
+                <li>貼到上面框 ✓ — 系統會原樣使用，桌機 + 手機都直達評論表單</li>
+              </ol>
+              <p><strong>退而求其次 — 直接複製 Google Maps 店家頁網址：</strong></p>
               <ol>
                 <li>Google 搜尋你的店家 → 點進 Google Maps 店家頁</li>
                 <li>網址列複製整段（例：<code>https://www.google.com/maps/place/.../@.../data=...</code>）</li>
-                <li>貼進上面框 ✓</li>
-              </ol>
-              <p><strong>更直接 — 從商家後台拿評論連結：</strong></p>
-              <ol>
-                <li>進 <a href="https://business.google.com/" target="_blank" rel="noopener">business.google.com</a></li>
-                <li>選你的店家 → 「取得更多評論」 / 「分享評論連結」</li>
-                <li>複製 <code>https://g.page/r/...</code> 貼進來</li>
+                <li>貼進上面框 — 系統會自動抽出店家 ID</li>
+                <li>⚠️ <strong>桌機可以直接到評論表單，但手機 Google Maps APP 會攔截到地圖店家頁，客戶需再點一次「撰寫評論」</strong></li>
               </ol>
               <p class="warn-text">⚠ 短網址 <code>maps.app.goo.gl/...</code> 不支援自動展開，請改用上面兩種方式。</p>
             </div>
@@ -155,6 +158,21 @@
         <button type="submit" class="primary-btn">💾 儲存設定</button>
         <p id="save-status" class="copy-status" aria-live="polite"></p>
       </form>
+
+      <div class="form-section bulk-section">
+        <h3 class="form-section-title">👥 批次產生員工專屬 QR Code</h3>
+        <p class="hint">每個員工一張 QR — 只有「姓名」不同，公司資訊／Google 評論連結／標籤都共用上面的設定。員工拿到 QR 給客戶掃即可，不需自己設定。</p>
+        <label class="field">
+          <span class="field-label">員工名單（每行一個）</span>
+          <textarea id="bulk-names" rows="6" placeholder="曼蒂&#10;小薰&#10;小美&#10;Yun"></textarea>
+        </label>
+        <div class="bulk-actions">
+          <button type="button" id="bulk-generate-btn" class="primary-btn">產生 QR Code</button>
+          <button type="button" id="bulk-download-all-btn" class="secondary-btn" disabled>⬇ 下載全部 QR (zip)</button>
+        </div>
+        <p id="bulk-status" class="copy-status" aria-live="polite"></p>
+        <div id="bulk-result" class="bulk-result"></div>
+      </div>
 
       <div class="form-section share-section">
         <h3 class="form-section-title">📤 分享給客戶</h3>
