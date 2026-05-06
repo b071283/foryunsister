@@ -21,9 +21,28 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.type = "button";
       btn.className = "tag";
       btn.textContent = label;
-      btn.addEventListener("click", () => btn.classList.toggle("active"));
+      btn.addEventListener("click", () => {
+        btn.classList.toggle("active");
+        updateCount(group);
+        updateSubmitState();
+      });
       grid.appendChild(btn);
     });
+    updateCount(group);
+  }
+
+  function updateCount(group) {
+    const count = document.querySelectorAll(
+      `.tag-grid[data-group="${group}"] .tag.active`
+    ).length;
+    const el = document.querySelector(`.count[data-count="${group}"]`);
+    if (el) el.textContent = String(count);
+    el?.parentElement.classList.toggle("has-selection", count > 0);
+  }
+
+  function updateSubmitState() {
+    const ok = !getValidationError();
+    submitBtn?.classList.toggle("ready", ok);
   }
 
   // 取得勾選的標籤
@@ -35,32 +54,44 @@ document.addEventListener("DOMContentLoaded", () => {
     ).map((el) => el.textContent.trim());
   }
 
-  // 組評論文字
+  // 組評論文字 — 自然段落
+  // 例:「大推醫美師曼蒂！她服務真的很{優點1}、{優點2}。這次過來覺得{感受1}，{感受2}。」
   function buildComment() {
     const pros = getSelected("pros");
     const feelings = getSelected("feelings");
 
-    const lines = [];
-    const personLabel = cfg.person ? `推薦${cfg.person}` : "推薦這裡";
-
-    if (pros.length) {
-      lines.push(`✨ ${personLabel}的優點：${pros.join("、")}`);
-    }
-    if (feelings.length) {
-      lines.push(`💖 當天的服務感受：${feelings.join("、")}`);
-    }
-    if (lines.length === 0) {
+    if (pros.length === 0 || feelings.length === 0) {
       return "";
     }
-    if (cfg.clinic) {
-      lines.push("");
-      lines.push(`📍 ${cfg.clinic}`);
-    }
-    return lines.join("\n");
+
+    const name = cfg.person || "";
+    const title = cfg.title || "";
+    const pronoun = cfg.pronoun || "她";
+
+    const subject = `${title}${name}` || "這位老師";
+    const prosText = pros.join("、");
+    const feelingsText = feelings.join("，");
+
+    return `大推${subject}！${pronoun}服務真的很${prosText}。這次過來覺得${feelingsText}。`;
   }
 
-  // 送出
-  const submitBtn = document.getElementById("submit-btn");
+  function getValidationError() {
+    const pros = getSelected("pros");
+    const feelings = getSelected("feelings");
+    if (pros.length === 0 && feelings.length === 0) {
+      return "請至少從每一段各勾選一項再送出 ✨";
+    }
+    if (pros.length === 0) {
+      return "「推薦的優點」至少要勾一個 👆";
+    }
+    if (feelings.length === 0) {
+      return "「當天服務感受」至少要勾一個 👆";
+    }
+    return "";
+  }
+
+  // 送出 — 要在 renderTags 裡用,但要先宣告
+  var submitBtn = document.getElementById("submit-btn");
   const modal = document.getElementById("result-modal");
   const preview = document.getElementById("comment-preview");
   const copyBtn = document.getElementById("copy-btn");
@@ -69,11 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const status = document.getElementById("copy-status");
 
   submitBtn.addEventListener("click", async () => {
-    const text = buildComment();
-    if (!text) {
-      alert("請至少勾選一項再送出 ✨");
+    const err = getValidationError();
+    if (err) {
+      alert(err);
       return;
     }
+    const text = buildComment();
     preview.textContent = text;
     modal.hidden = false;
 

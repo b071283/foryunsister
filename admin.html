@@ -6,7 +6,7 @@
   <title>管理員 — 評價系統</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-page="admin">
   <main class="container">
     <h1 class="title">🔐 管理員設定</h1>
 
@@ -37,9 +37,19 @@
         <div class="form-section">
           <h3 class="form-section-title">公司資訊</h3>
           <label class="field">
-            <span class="field-label">標題（推薦對象名稱）</span>
+            <span class="field-label">推薦對象姓名</span>
             <input type="text" id="set-person" placeholder="例：曼蒂" />
             <span class="field-hint">會顯示成「✨ {名稱}專屬評價」</span>
+          </label>
+          <label class="field">
+            <span class="field-label">職稱</span>
+            <input type="text" id="set-title" placeholder="例：醫美師、美容師、造型師" />
+            <span class="field-hint">評論裡會寫成「大推{職稱}{姓名}！」</span>
+          </label>
+          <label class="field">
+            <span class="field-label">代名詞</span>
+            <input type="text" id="set-pronoun" placeholder="例：她、他" maxlength="2" />
+            <span class="field-hint">評論裡會寫成「{代名詞}服務真的很...」</span>
           </label>
           <label class="field">
             <span class="field-label">公司／診所名稱</span>
@@ -108,14 +118,27 @@
       </form>
 
       <div class="form-section share-section">
-        <h3 class="form-section-title">📤 分享給客戶的連結</h3>
-        <p class="hint">每次儲存設定後，這條連結會更新。把它貼到 LINE / 限時動態 / QR Code，客戶打開就會看到對的內容。</p>
-        <div class="share-row">
-          <input type="text" id="share-url" readonly />
-          <button id="copy-share-btn" type="button" class="secondary-btn">📋 複製</button>
-        </div>
-        <div class="share-row">
-          <a id="preview-link" href="#" target="_blank" rel="noopener" class="secondary-btn">👀 預覽客戶看到的頁面</a>
+        <h3 class="form-section-title">📤 分享給客戶</h3>
+        <p class="hint">儲存後連結與 QR Code 會更新。挑一個（或兩個）給客戶 — 線上分享用連結，店面/紙本用 QR Code。</p>
+
+        <div class="share-grid">
+          <div class="share-qr">
+            <div class="qr-frame">
+              <img id="qr-img" alt="分享 QR Code" />
+            </div>
+            <div class="qr-actions">
+              <button id="download-qr-btn" type="button" class="secondary-btn">⬇ 下載 QR</button>
+            </div>
+          </div>
+
+          <div class="share-link">
+            <p class="share-link-label">分享連結</p>
+            <div class="share-row">
+              <input type="text" id="share-url" readonly />
+              <button id="copy-share-btn" type="button" class="secondary-btn">📋 複製</button>
+            </div>
+            <a id="preview-link" href="#" target="_blank" rel="noopener" class="secondary-btn share-preview-btn">👀 預覽客戶看到的畫面</a>
+          </div>
         </div>
       </div>
     </section>

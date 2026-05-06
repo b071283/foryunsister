@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveStatus = document.getElementById("save-status");
 
   const personEl = document.getElementById("set-person");
+  const titleEl = document.getElementById("set-title");
+  const pronounEl = document.getElementById("set-pronoun");
   const clinicEl = document.getElementById("set-clinic");
   const addressEl = document.getElementById("set-address");
   const googleEl = document.getElementById("set-google");
@@ -18,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const shareUrlEl = document.getElementById("share-url");
   const copyShareBtn = document.getElementById("copy-share-btn");
   const previewLink = document.getElementById("preview-link");
+  const qrImg = document.getElementById("qr-img");
+  const downloadQrBtn = document.getElementById("download-qr-btn");
   const googlePreviewEl = document.getElementById("google-preview");
   const googlePreviewUrlEl = document.getElementById("google-preview-url");
   const googlePreviewStatusEl = document.getElementById(
@@ -39,6 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function populateForm() {
     const cfg = AppConfig.load();
     personEl.value = cfg.person || "";
+    titleEl.value = cfg.title || "";
+    pronounEl.value = cfg.pronoun || "";
     clinicEl.value = cfg.clinic || "";
     addressEl.value = cfg.address || "";
     googleEl.value = cfg.googleUrl || "";
@@ -52,6 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function readForm() {
     return {
       person: personEl.value.trim(),
+      title: titleEl.value.trim(),
+      pronoun: pronounEl.value.trim() || "她",
       clinic: clinicEl.value.trim(),
       address: addressEl.value.trim(),
       googleUrl: googleEl.value.trim(),
@@ -67,6 +75,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = AppConfig.buildShareUrl(cfg);
     shareUrlEl.value = url;
     previewLink.href = url;
+    qrImg.src =
+      "https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&format=png&data=" +
+      encodeURIComponent(url);
+  }
+
+  async function downloadQR() {
+    const url = qrImg.src;
+    if (!url) return;
+    downloadQrBtn.disabled = true;
+    const original = downloadQrBtn.textContent;
+    downloadQrBtn.textContent = "下載中…";
+    try {
+      const r = await fetch(url);
+      const blob = await r.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const name = (clinicEl.value || personEl.value || "share").replace(
+        /[^\w一-鿿-]/g,
+        ""
+      );
+      a.href = objUrl;
+      a.download = `${name || "share"}-QR.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+      downloadQrBtn.textContent = "✅ 已下載";
+    } catch (e) {
+      console.error(e);
+      // fallback: open in new tab so user can right-click save
+      window.open(url, "_blank", "noopener");
+      downloadQrBtn.textContent = "已開啟新分頁，右鍵另存";
+    } finally {
+      setTimeout(() => {
+        downloadQrBtn.textContent = original;
+        downloadQrBtn.disabled = false;
+      }, 2500);
+    }
   }
 
   function refreshGooglePreview() {
@@ -153,6 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 即時預覽 Google URL 轉換結果
   googleEl.addEventListener("input", refreshGooglePreview);
+
+  // QR 下載
+  downloadQrBtn.addEventListener("click", downloadQR);
 
   // 啟動
   if (AppConfig.isLoggedIn()) {

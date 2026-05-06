@@ -5,9 +5,11 @@ window.AppConfig = (() => {
   const SESSION_KEY = "foryunsister_admin_session";
 
   const DEFAULT = {
-    person: "曼蒂",
-    clinic: "青熙美學診所",
-    address: "台中市南屯區益昌一街37號1樓",
+    person: "",
+    title: "醫美師",
+    pronoun: "她",
+    clinic: "",
+    address: "",
     googleUrl: "",
     pros: [
       "講解細緻清晰",
@@ -26,8 +28,13 @@ window.AppConfig = (() => {
       "被細心呵護感",
       "諮詢後很安心",
       "聊天氛圍很愉快",
-      "很滿意整體服務",
-      "願意再次回來"
+      "環境隱私感極佳",
+      "效果立即有感",
+      "錢花得很值得",
+      "下次絕對再預約",
+      "超出預期的質感",
+      "被溫柔對待的感覺",
+      "整體質感非常好"
     ]
   };
 
