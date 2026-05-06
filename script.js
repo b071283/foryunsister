@@ -141,7 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
   var submitBtn = document.getElementById("submit-btn");
   const modal = document.getElementById("result-modal");
   const preview = document.getElementById("comment-preview");
-  const copyBtn = document.getElementById("copy-btn");
   const openBtn = document.getElementById("open-google-btn");
   const closeBtn = document.getElementById("modal-close");
   const status = document.getElementById("copy-status");
@@ -197,8 +196,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ).map((cb) => parseInt(cb.dataset.idx, 10));
   }
 
-  // 送出
-  submitBtn.addEventListener("click", async () => {
+  // 送出 → 顯示 modal,等待「前往 Google 評論」按鈕一鍵搞定所有動作
+  submitBtn.addEventListener("click", () => {
     const err = getValidationError();
     if (err) {
       alert(err);
@@ -207,48 +206,55 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = buildComment();
     preview.textContent = text;
     renderImagePicker();
+    status.textContent = "";
     modal.hidden = false;
-
-    const ok = await copyToClipboard(text);
-    status.textContent = ok
-      ? "✅ 已自動複製，照下面 3 步驟就完成"
-      : "⚠️ 自動複製失敗，請手動點「複製評論」";
-    status.dataset.ok = ok ? "1" : "0";
   });
 
-  copyBtn.addEventListener("click", async () => {
-    const ok = await copyToClipboard(preview.textContent);
-    status.textContent = ok ? "✅ 已複製！" : "⚠️ 複製失敗，請長按文字選取手動複製";
-    status.dataset.ok = ok ? "1" : "0";
-  });
-
-  // 點「前往 Google 評論」→ 先下載勾選的照片,再開分頁
+  // 點「前往 Google 評論」一鍵：複製文字 → 下載勾選的照片 → 開新分頁
+  // （瀏覽器要求 clipboard 在 user gesture 內呼叫,所以放這裡而不是送出時自動跑）
   openBtn.addEventListener("click", async () => {
     if (!cfg.googleUrl) {
       alert("⚠️ 管理員尚未設定 Google 評論連結");
       return;
     }
-    const url = AppConfig.normalizeReviewUrl(cfg.googleUrl);
 
+    const oldText = openBtn.textContent;
+    openBtn.disabled = true;
+
+    // 1) 複製評論到剪貼簿
+    const copied = await copyToClipboard(preview.textContent);
+    if (!copied) {
+      // 即使複製失敗也繼續,提示客戶手動複製
+      status.textContent = "⚠️ 自動複製失敗,請在 Google 評論頁長按貼上前自行選取上面文字複製";
+      status.dataset.ok = "0";
+    } else {
+      status.textContent = "✅ 評論已複製,正在前往 Google…";
+      status.dataset.ok = "1";
+    }
+
+    // 2) 下載勾選的圖片
     const picks = selectedImageIndices();
     if (picks.length > 0 && Array.isArray(cfg.images)) {
-      openBtn.disabled = true;
-      const oldText = openBtn.textContent;
       try {
         for (let i = 0; i < picks.length; i++) {
-          openBtn.textContent = `下載中 ${i + 1}/${picks.length}…`;
+          openBtn.textContent = `下載照片 ${i + 1}/${picks.length}…`;
           const img = cfg.images[picks[i]];
           if (img?.url) await downloadFile(img.url, `photo-${i + 1}.jpg`);
         }
       } catch (e) {
         console.error("download error", e);
-      } finally {
-        openBtn.textContent = oldText;
-        openBtn.disabled = false;
       }
     }
 
+    // 3) 開 Google 評論頁
+    openBtn.textContent = "已開啟 Google";
+    const url = AppConfig.normalizeReviewUrl(cfg.googleUrl);
     window.open(url, "_blank", "noopener");
+
+    setTimeout(() => {
+      openBtn.textContent = oldText;
+      openBtn.disabled = false;
+    }, 1500);
   });
 
   closeBtn.addEventListener("click", () => {

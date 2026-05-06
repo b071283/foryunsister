@@ -507,6 +507,13 @@ body[data-page="admin"] .container { max-width: 760px; }
   flex: 1 1 0;
   min-width: 130px;
 }
+.modal-actions .primary-btn-wide {
+  flex: 1 1 100%;
+  width: 100%;
+  font-size: 15px;
+  padding: 16px 20px;
+  letter-spacing: 1.5px;
+}
 .mobile-fallback-hint {
   margin: 0 0 12px;
   padding: 10px 12px;
