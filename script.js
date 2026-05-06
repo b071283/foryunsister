@@ -213,8 +213,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     modal.hidden = false;
   });
 
-  // 點「前往 Google 評論」一鍵：複製文字 → 下載勾選的照片 → 開新分頁
-  // （瀏覽器要求 clipboard 在 user gesture 內呼叫,所以放這裡而不是送出時自動跑）
+  // 點「下載照片並前往 Google 評論」:
+  // 1) 複製評論到剪貼簿(user gesture 內才 work)
+  // 2) 背景下載勾選的照片(全部完成後才繼續)
+  // 3) 確認下載完成後,自動開 Google 評論新分頁
   openBtn.addEventListener("click", async () => {
     if (!cfg.googleUrl) {
       alert("⚠️ 管理員尚未設定 Google 評論連結");
@@ -224,38 +226,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     const oldText = openBtn.textContent;
     openBtn.disabled = true;
 
-    // 1) 複製評論到剪貼簿
+    // 1) 複製評論
     const copied = await copyToClipboard(preview.textContent);
-    if (!copied) {
-      // 即使複製失敗也繼續,提示客戶手動複製
-      status.textContent = "⚠️ 自動複製失敗,請在 Google 評論頁長按貼上前自行選取上面文字複製";
-      status.dataset.ok = "0";
-    } else {
-      status.textContent = "✅ 評論已複製,正在前往 Google…";
-      status.dataset.ok = "1";
-    }
 
-    // 2) 下載勾選的圖片
+    // 2) 背景下載照片(全部完成才放行)
     const picks = selectedImageIndices();
+    let succeeded = 0;
     if (picks.length > 0 && Array.isArray(cfg.images)) {
-      try {
-        for (let i = 0; i < picks.length; i++) {
-          openBtn.textContent = `下載照片 ${i + 1}/${picks.length}…`;
-          const img = cfg.images[picks[i]];
-          if (img?.url) await downloadFile(img.url, `photo-${i + 1}.jpg`);
+      for (let i = 0; i < picks.length; i++) {
+        openBtn.textContent = `下載照片 ${i + 1}/${picks.length}…`;
+        const img = cfg.images[picks[i]];
+        if (img?.url) {
+          const ok = await downloadFile(img.url, `photo-${i + 1}.jpg`);
+          if (ok) succeeded++;
         }
-      } catch (e) {
-        console.error("download error", e);
+        // 小延遲避免某些瀏覽器併發下載被 throttle
+        await new Promise((r) => setTimeout(r, 200));
       }
     }
 
-    // 3) 開 Google 評論頁
+    // 顯示狀態
+    const parts = [];
+    parts.push(copied ? "✅ 評論已複製" : "⚠️ 評論複製失敗,到 Google 後請自行選取上面文字複製");
+    if (picks.length > 0) {
+      parts.push(succeeded === picks.length
+        ? `✅ 已下載 ${succeeded} 張照片`
+        : `⚠️ 下載 ${succeeded}/${picks.length} 張(部分失敗)`);
+    }
+    status.textContent = parts.join("、") + "，前往 Google 評論…";
+    status.dataset.ok = copied && succeeded === picks.length ? "1" : "0";
+
+    // 3) 自動開 Google
     openBtn.textContent = "已開啟 Google";
     const url = AppConfig.normalizeReviewUrl(cfg.googleUrl);
     window.open(url, "_blank", "noopener");
 
     setTimeout(() => {
-      // 還原預設文字（依當下是否有圖片）
+      // 還原預設文字
       const list = Array.isArray(cfg.images) ? cfg.images : [];
       openBtn.textContent =
         list.length > 0 ? "📥 下載照片並前往 Google 評論" : "前往 Google 評論";
@@ -292,25 +299,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // R2 物件已有 Content-Disposition: attachment 標頭,瀏覽器會直接下載
-  // 用 fetch+blob 比直接 anchor 更可靠（iOS Safari 對 cross-origin <a download> 有限制）
-  // fallback: 如果 fetch 失敗,改開新分頁讓使用者長按存圖
+  // 背景下載到客戶設備預設下載位置 — 完全靜默,不開新分頁
+  // 失敗就記 console,絕對不 fallback 到 window.open（會打開新分頁打擾客戶）
+  // 回傳 true/false 讓呼叫端統計成功數
   async function downloadFile(url, filename) {
     try {
-      const r = await fetch(url, { mode: "cors" });
-      if (!r.ok) throw new Error(`fetch ${r.status}`);
+      const r = await fetch(url, { mode: "cors", cache: "force-cache" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const blob = await r.blob();
       const a = document.createElement("a");
       const objUrl = URL.createObjectURL(blob);
       a.href = objUrl;
       a.download = filename;
+      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(objUrl), 1500);
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        URL.revokeObjectURL(objUrl);
+      }, 1500);
+      return true;
     } catch (err) {
-      console.warn("blob download failed, fallback to new tab", err);
-      window.open(url, "_blank", "noopener");
+      console.warn("[download] failed:", filename, err);
+      return false;
     }
   }
 });
