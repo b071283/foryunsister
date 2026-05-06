@@ -151,6 +151,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   const stepNoImageHint = document.getElementById("step-no-image-hint");
   const stepImagePhoto = document.getElementById("step-image-photo");
 
+  // 預先抓取的圖片 blob 快取（避免 click 時還在 await fetch 導致 user gesture 失效）
+  // 客戶在 modal 打開時就背景開始下載到記憶體,點按鈕時直接用 cached blob 觸發下載 click
+  const blobCache = new Map(); // url → blob
+
+  function prefetchImages() {
+    const list = Array.isArray(cfg.images) ? cfg.images : [];
+    list.forEach((img) => {
+      if (!img?.url || blobCache.has(img.url)) return;
+      fetch(img.url, { mode: "cors", cache: "force-cache" })
+        .then((r) => (r.ok ? r.blob() : null))
+        .then((b) => {
+          if (b) blobCache.set(img.url, b);
+        })
+        .catch((e) => console.warn("[prefetch] failed:", img.url, e));
+    });
+  }
+
   // 圖片選擇器（如果 admin 有上傳）
   function renderImagePicker() {
     imagePicker.innerHTML = "";
@@ -199,7 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ).map((cb) => parseInt(cb.dataset.idx, 10));
   }
 
-  // 送出 → 顯示 modal,等待「前往 Google 評論」按鈕一鍵搞定所有動作
+  // 送出 → 顯示 modal + 預先抓取圖片 blob 到記憶體
   submitBtn.addEventListener("click", () => {
     const err = getValidationError();
     if (err) {
@@ -211,6 +228,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderImagePicker();
     status.textContent = "";
     modal.hidden = false;
+    // Modal 打開的同時就開始抓圖,客戶讀完文字、選照片大概 3-5 秒,圖片應該都到位了
+    prefetchImages();
   });
 
   // 點「下載照片並前往 Google 評論」:
@@ -229,19 +248,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1) 複製評論
     const copied = await copyToClipboard(preview.textContent);
 
-    // 2) 背景下載照片(全部完成才放行)
+    // 2) 同步觸發下載 — 從 prefetch 的 blob cache 拿,user gesture 不失效
     const picks = selectedImageIndices();
     let succeeded = 0;
     if (picks.length > 0 && Array.isArray(cfg.images)) {
+      // 先檢查 cache 命中率
+      const cached = picks.filter((idx) => blobCache.has(cfg.images[idx]?.url)).length;
+      if (cached < picks.length) {
+        openBtn.textContent = `等待圖片載入… (${cached}/${picks.length})`;
+        // 簡單等一下沒抓到的圖（最多 3 秒）
+        let waited = 0;
+        while (waited < 3000) {
+          const now = picks.filter((idx) => blobCache.has(cfg.images[idx]?.url)).length;
+          if (now === picks.length) break;
+          await new Promise((r) => setTimeout(r, 100));
+          waited += 100;
+        }
+      }
+      // 觸發下載 — 全部用同步 anchor click
       for (let i = 0; i < picks.length; i++) {
-        openBtn.textContent = `下載照片 ${i + 1}/${picks.length}…`;
+        openBtn.textContent = `下載 ${i + 1}/${picks.length}…`;
         const img = cfg.images[picks[i]];
         if (img?.url) {
-          const ok = await downloadFile(img.url, `photo-${i + 1}.jpg`);
+          const ok = await downloadOne(img.url, `photo-${i + 1}.jpg`);
           if (ok) succeeded++;
         }
-        // 小延遲避免某些瀏覽器併發下載被 throttle
-        await new Promise((r) => setTimeout(r, 200));
+        // 100ms 延遲避免併發節流
+        await new Promise((r) => setTimeout(r, 100));
       }
     }
 
@@ -299,14 +332,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 背景下載到客戶設備預設下載位置 — 完全靜默,不開新分頁
-  // 失敗就記 console,絕對不 fallback 到 window.open（會打開新分頁打擾客戶）
-  // 回傳 true/false 讓呼叫端統計成功數
-  async function downloadFile(url, filename) {
+  // 同步觸發 blob 下載（不 fetch,從 cache 拿）— 保留 user gesture 給 Android Chrome
+  function triggerBlobDownload(blob, filename) {
     try {
-      const r = await fetch(url, { mode: "cors", cache: "force-cache" });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const blob = await r.blob();
       const a = document.createElement("a");
       const objUrl = URL.createObjectURL(blob);
       a.href = objUrl;
@@ -320,7 +348,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       }, 1500);
       return true;
     } catch (err) {
-      console.warn("[download] failed:", filename, err);
+      console.warn("[download] anchor click failed:", filename, err);
+      return false;
+    }
+  }
+
+  // 用 cached blob 同步下載一張圖,沒 cached 就 fallback 即時 fetch
+  // 回傳 boolean 給呼叫端統計
+  async function downloadOne(url, filename) {
+    const cached = blobCache.get(url);
+    if (cached) {
+      return triggerBlobDownload(cached, filename);
+    }
+    // 沒抓到（prefetch 還沒回來、或失敗）→ 即時 fetch（user gesture 可能會過期,但盡量試）
+    try {
+      const r = await fetch(url, { mode: "cors", cache: "force-cache" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const blob = await r.blob();
+      blobCache.set(url, blob);
+      return triggerBlobDownload(blob, filename);
+    } catch (err) {
+      console.warn("[download] live fetch failed:", filename, err);
       return false;
     }
   }
