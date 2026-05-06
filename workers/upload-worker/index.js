@@ -97,7 +97,11 @@ export default {
 
       try {
         await env.IMAGES.put(key, request.body, {
-          httpMetadata: { contentType: ct }
+          httpMetadata: {
+            contentType: ct,
+            // 強制下載而不是預覽,讓客戶手機直接收到檔案到相簿/檔案管理員
+            contentDisposition: `attachment; filename="${key}"`
+          }
         });
       } catch (e) {
         return json({ error: "r2 put failed", detail: String(e) }, 500, origin);
@@ -110,6 +114,43 @@ export default {
           url: `${env.PUBLIC_BASE.replace(/\/$/, "")}/${key}`,
           contentType: ct,
           size: cl
+        },
+        200,
+        origin
+      );
+    }
+
+    // POST /config — 把整個 admin config 存到 R2,回傳一個短 ID
+    // 之後分享連結就只是 ?id=ABCDEFGH (~8 chars)
+    if (request.method === "POST" && url.pathname === "/config") {
+      if (!ALLOWED_ORIGINS.has(origin)) {
+        return json({ error: "origin not allowed" }, 403, origin);
+      }
+      if (!checkAuth(request, env)) {
+        return json({ error: "forbidden" }, 403, origin);
+      }
+      const body = await request.text();
+      if (body.length > 200 * 1024) {
+        return json({ error: "config too large" }, 413, origin);
+      }
+      // 8-char base32-ish ID（無歧義字元）
+      const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+      const buf = new Uint8Array(8);
+      crypto.getRandomValues(buf);
+      const id = Array.from(buf, (b) => alphabet[b % alphabet.length]).join("");
+      const key = `cfg/${id}.json`;
+      try {
+        await env.IMAGES.put(key, body, {
+          httpMetadata: { contentType: "application/json; charset=utf-8" }
+        });
+      } catch (e) {
+        return json({ error: "r2 put failed", detail: String(e) }, 500, origin);
+      }
+      return json(
+        {
+          success: true,
+          id,
+          url: `${env.PUBLIC_BASE.replace(/\/$/, "")}/${key}`
         },
         200,
         origin

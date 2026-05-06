@@ -336,8 +336,8 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   });
 
-  // 儲存
-  settingsForm.addEventListener("submit", (e) => {
+  // 儲存 — 同時把 config 上傳到 R2 拿短 ID
+  settingsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const cfg = readForm();
     AppConfig.save(cfg);
@@ -345,9 +345,18 @@ document.addEventListener("DOMContentLoaded", () => {
       AppConfig.setPassword(newpassEl.value);
       newpassEl.value = "";
     }
-    refreshShare(cfg);
-    saveStatus.textContent = "✅ 已儲存，分享連結已更新";
+    saveStatus.textContent = "上傳設定中…";
     saveStatus.dataset.ok = "1";
+    try {
+      await AppConfig.saveConfigToR2(cfg, UPLOAD_TOKEN);
+      saveStatus.textContent = "✅ 已儲存，分享連結已縮短";
+    } catch (err) {
+      console.error(err);
+      saveStatus.textContent =
+        "⚠️ 儲存到雲端失敗,改用長網址（仍可使用）：" + err.message;
+      saveStatus.dataset.ok = "0";
+    }
+    refreshShare(cfg);
     setTimeout(() => {
       saveStatus.textContent = "";
     }, 4000);
@@ -393,9 +402,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const baseCfg = readForm();
+    const id = AppConfig.getConfigId();
     bulkResults = names.map((name) => {
-      const cfg = { ...baseCfg, person: name };
-      const url = AppConfig.buildShareUrl(cfg);
+      let url;
+      if (id) {
+        // 短 URL：?id=ABCDEFGH&p=曼蒂 (~25 chars total)
+        url = AppConfig.buildShareUrlShort(id, name);
+      } else {
+        // fallback：base64 長 URL
+        url = AppConfig.buildShareUrl({ ...baseCfg, person: name });
+      }
       const qrUrl =
         "https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=12&format=png&data=" +
         encodeURIComponent(url);

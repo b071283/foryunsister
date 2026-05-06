@@ -1,5 +1,6 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const cfg = AppConfig.load();
+document.addEventListener("DOMContentLoaded", async () => {
+  // loadAsync 會處理 ?id=ABCDEFGH 短 URL（從 R2 拉 config）。如果失敗或沒有 id 參數,fallback 到 sync load()
+  const cfg = await AppConfig.loadAsync();
   const name = cfg.person || "勻勻";
   const vars = { name };
 
@@ -291,17 +292,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // R2 物件已有 Content-Disposition: attachment 標頭,瀏覽器會直接下載
+  // 用 fetch+blob 比直接 anchor 更可靠（iOS Safari 對 cross-origin <a download> 有限制）
+  // fallback: 如果 fetch 失敗,改開新分頁讓使用者長按存圖
   async function downloadFile(url, filename) {
-    const r = await fetch(url, { mode: "cors" });
-    if (!r.ok) throw new Error(`fetch ${r.status}`);
-    const blob = await r.blob();
-    const a = document.createElement("a");
-    const objUrl = URL.createObjectURL(blob);
-    a.href = objUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(objUrl), 1500);
+    try {
+      const r = await fetch(url, { mode: "cors" });
+      if (!r.ok) throw new Error(`fetch ${r.status}`);
+      const blob = await r.blob();
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1500);
+    } catch (err) {
+      console.warn("blob download failed, fallback to new tab", err);
+      window.open(url, "_blank", "noopener");
+    }
   }
 });

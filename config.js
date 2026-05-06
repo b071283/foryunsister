@@ -5,6 +5,8 @@ window.AppConfig = (() => {
   const SESSION_KEY = "foryunsister_admin_session";
 
   const WORKER_URL = "https://foryunsister-upload.rxrxttb.workers.dev";
+  const R2_PUBLIC_BASE = "https://pub-fe48d0757d44404188398c4b0f1c3d76.r2.dev";
+  const CONFIG_ID_KEY = "foryunsister_config_id_v1";
 
   const DEFAULT = {
     person: "勻勻",
@@ -87,13 +89,14 @@ window.AppConfig = (() => {
     return JSON.parse(json);
   }
 
-  // 讀順序：URL ?c= → localStorage → DEFAULT
+  // 同步讀（不含 R2 fetch）：URL ?c=BASE64 → localStorage → DEFAULT
+  // 客戶端 use loadAsync() 才能解析 ?id=ABCDEFGH 短 URL
   function load() {
     const params = new URLSearchParams(location.search);
     const fromUrl = params.get("c");
     if (fromUrl) {
       try {
-        return mergeDefaults(decodeConfig(fromUrl));
+        return applyOverrides(mergeDefaults(decodeConfig(fromUrl)), params);
       } catch (e) {
         console.warn("URL config parse failed, falling back", e);
       }
@@ -101,12 +104,38 @@ window.AppConfig = (() => {
     const fromStorage = localStorage.getItem(STORAGE_KEY);
     if (fromStorage) {
       try {
-        return mergeDefaults(JSON.parse(fromStorage));
+        return applyOverrides(mergeDefaults(JSON.parse(fromStorage)), params);
       } catch (e) {
         console.warn("LocalStorage config parse failed", e);
       }
     }
-    return { ...DEFAULT };
+    return applyOverrides({ ...DEFAULT }, params);
+  }
+
+  // Async load — 支援 ?id=ABCDEFGH 從 R2 拉 config
+  async function loadAsync() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    if (id) {
+      try {
+        const cfgUrl = `${R2_PUBLIC_BASE}/cfg/${encodeURIComponent(id)}.json`;
+        const r = await fetch(cfgUrl, { cache: "force-cache" });
+        if (r.ok) {
+          const data = await r.json();
+          return applyOverrides(mergeDefaults(data), params);
+        }
+      } catch (e) {
+        console.warn("R2 config fetch failed, falling back to local", e);
+      }
+    }
+    return load();
+  }
+
+  // ?p=員工名 (encoded) → 覆蓋 person 欄位 (用於批次 QR 共用同一個 base config)
+  function applyOverrides(cfg, params) {
+    const p = params.get("p");
+    if (p) cfg.person = decodeURIComponent(p);
+    return cfg;
   }
 
   function save(cfg) {
@@ -194,7 +223,25 @@ window.AppConfig = (() => {
     return false;
   }
 
+  // 短 URL 版（基於 R2 上的 cfg/{id}.json）。可選擇覆蓋 person 給批次 QR 用。
+  function buildShareUrlShort(id, personOverride) {
+    const url = new URL(location.href);
+    url.pathname = url.pathname.replace(/admin\.html$/, "");
+    if (!url.pathname.endsWith("/")) url.pathname += "/";
+    const params = new URLSearchParams({ id });
+    if (personOverride) params.set("p", personOverride);
+    url.search = "?" + params.toString();
+    url.hash = "";
+    return url.toString();
+  }
+
+  // 舊版（base64 整包塞 URL）— 保留作 fallback,當沒有 R2 ID 時用
   function buildShareUrl(cfg) {
+    const id = localStorage.getItem(CONFIG_ID_KEY);
+    if (id) {
+      // 有 ID 就走短 URL 版
+      return buildShareUrlShort(id, cfg.person);
+    }
     const url = new URL(location.href);
     url.pathname = url.pathname.replace(/admin\.html$/, "");
     if (!url.pathname.endsWith("/")) url.pathname += "/";
@@ -203,11 +250,43 @@ window.AppConfig = (() => {
     return url.toString();
   }
 
+  function getConfigId() {
+    return localStorage.getItem(CONFIG_ID_KEY);
+  }
+  function setConfigId(id) {
+    if (id) localStorage.setItem(CONFIG_ID_KEY, id);
+    else localStorage.removeItem(CONFIG_ID_KEY);
+  }
+
+  // 把整個 config 上傳到 R2,回傳 ID
+  async function saveConfigToR2(cfg, uploadToken) {
+    const r = await fetch(`${WORKER_URL}/config`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Pass": uploadToken
+      },
+      body: JSON.stringify(cfg)
+    });
+    const data = await r.json();
+    if (!r.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${r.status}`);
+    }
+    setConfigId(data.id);
+    return data.id;
+  }
+
   return {
     DEFAULT,
     WORKER_URL,
+    R2_PUBLIC_BASE,
     load,
+    loadAsync,
     save,
+    saveConfigToR2,
+    getConfigId,
+    setConfigId,
+    buildShareUrlShort,
     getPassword,
     setPassword,
     isLoggedIn,
