@@ -104,8 +104,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ----- 圖片上傳 -----
   const MAX_IMAGES = 8;
-  const MAX_DIM = 1400; // 長邊上限
-  const QUALITY = 0.82;
+  const MAX_DIM = 1000; // 長邊上限（壓更小,客戶下載快）
+  const QUALITY = 0.7;
 
   async function compressImage(file) {
     const dataUrl = await readFileAsDataUrl(file);

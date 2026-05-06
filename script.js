@@ -159,12 +159,14 @@ document.addEventListener("DOMContentLoaded", () => {
       stepImageHint.hidden = true;
       stepImagePhoto.hidden = true;
       stepNoImageHint.hidden = false;
+      openBtn.textContent = "前往 Google 評論";
       return;
     }
     imagePickerSec.hidden = false;
     stepImageHint.hidden = false;
     stepImagePhoto.hidden = false;
     stepNoImageHint.hidden = true;
+    openBtn.textContent = "📥 下載照片並前往 Google 評論";
 
     list.forEach((img, i) => {
       const wrap = document.createElement("label");
@@ -252,7 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(url, "_blank", "noopener");
 
     setTimeout(() => {
-      openBtn.textContent = oldText;
+      // 還原預設文字（依當下是否有圖片）
+      const list = Array.isArray(cfg.images) ? cfg.images : [];
+      openBtn.textContent =
+        list.length > 0 ? "📥 下載照片並前往 Google 評論" : "前往 Google 評論";
       openBtn.disabled = false;
     }, 1500);
   });
