@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>推薦系統</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1 class="title">✨ 專屬評價</h1>
+
+    <section class="clinic-card">
+      <p class="clinic-name">📍 診所名稱</p>
+      <p class="clinic-address">地址尚未設定</p>
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">推薦的優點（多選）</h2>
+      <div class="tag-grid" data-group="pros">
+        <button type="button" class="tag">講解細緻清晰</button>
+        <button type="button" class="tag">減法建議不推銷</button>
+        <button type="button" class="tag">新手友善沒壓力</button>
+        <button type="button" class="tag">審美自然有質感</button>
+        <button type="button" class="tag">觀察力極強</button>
+        <button type="button" class="tag">流程專業誠懇</button>
+        <button type="button" class="tag">動作輕柔穩定</button>
+        <button type="button" class="tag">術後衛教專業</button>
+        <button type="button" class="tag">風險告知坦白</button>
+        <button type="button" class="tag">溝通非常有溫度</button>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">當天服務感受（多選）</h2>
+      <div class="tag-grid" data-group="feelings">
+        <button type="button" class="tag">全程放鬆不緊張</button>
+        <button type="button" class="tag">被細心呵護感</button>
+        <button type="button" class="tag">諮詢後很安心</button>
+        <button type="button" class="tag">聊天氛圍很愉快</button>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button id="submit-btn" type="button" class="primary-btn">送出評價</button>
+    </section>
+
+    <div id="result" class="result" hidden></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

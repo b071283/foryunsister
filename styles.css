@@ -1,0 +1,145 @@
+:root {
+  --bg-start: #f3eaff;
+  --bg-end: #ece4ff;
+  --card-bg: #ffffff;
+  --card-soft: #f4ecff;
+  --primary: #6b3fd1;
+  --primary-dark: #4f29a8;
+  --text: #2b2240;
+  --text-soft: #5a4f7a;
+  --tag-border: #d8c7ff;
+  --tag-active-bg: #6b3fd1;
+  --tag-active-text: #ffffff;
+  --shadow: 0 6px 24px rgba(80, 40, 160, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+    "Microsoft JhengHei", sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  color: var(--primary);
+  margin: 16px 0 24px;
+  letter-spacing: 1px;
+}
+
+.clinic-card {
+  background: var(--card-soft);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+}
+
+.clinic-name {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.clinic-address {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 15px;
+}
+
+.group {
+  margin-bottom: 28px;
+}
+
+.group-title {
+  font-size: 17px;
+  color: var(--primary-dark);
+  margin: 0 0 14px;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.tag {
+  appearance: none;
+  border: 1.5px solid var(--tag-border);
+  background: var(--card-bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 14px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.tag:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.tag.active {
+  background: var(--tag-active-bg);
+  color: var(--tag-active-text);
+  border-color: var(--tag-active-bg);
+  box-shadow: 0 4px 12px rgba(107, 63, 209, 0.3);
+}
+
+.actions {
+  margin-top: 36px;
+  text-align: center;
+}
+
+.primary-btn {
+  appearance: none;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 36px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(107, 63, 209, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(107, 63, 209, 0.35);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+.result {
+  margin-top: 24px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  white-space: pre-wrap;
+  font-size: 14px;
+  color: var(--text-soft);
+}
