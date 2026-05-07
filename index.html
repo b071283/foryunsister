@@ -3,8 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>專屬評價</title>
+  <title>暫停服務維護中</title>
+  <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .maintenance {
+      max-width: 480px;
+      margin: 80px auto 0;
+      padding: 36px 28px 32px;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .maintenance-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .maintenance h1 {
+      margin: 0 0 12px;
+      color: var(--primary-dark);
+      font-size: 22px;
+      letter-spacing: 2px;
+    }
+    .maintenance p {
+      margin: 8px 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .maintenance-sign {
+      margin-top: 28px;
+      color: var(--primary);
+      letter-spacing: 4px;
+    }
+  </style>
 </head>
 <body>
   <div class="bg-deco">
@@ -12,110 +47,14 @@
     <span class="bg-blob bg-blob-2"></span>
     <span class="bg-spark bg-spark-1">✦</span>
     <span class="bg-spark bg-spark-2">✦</span>
-    <span class="bg-spark bg-spark-3">+</span>
-    <span class="bg-spark bg-spark-4">+</span>
   </div>
 
-  <main class="container">
-    <div id="webview-banner" class="webview-banner" hidden>
-      <span class="webview-icon">⚠️</span>
-      <div class="webview-text">
-        <strong>偵測到你在 <span id="webview-name">LINE</span> 內開啟</strong>
-        <p id="webview-msg">照片下載功能在這裡會被擋下，請改用 <span id="webview-browser">Chrome</span>。</p>
-      </div>
-      <div class="webview-actions">
-        <button id="webview-open-btn" type="button" class="webview-primary">🚀 立即在 Chrome 開啟</button>
-        <button id="webview-copy-btn" type="button" class="webview-copy">📋 複製網址</button>
-      </div>
-    </div>
-
-    <header class="brand">
-      <div class="brand-mark" id="brand-mark">勻勻 <span class="brand-heart">♡</span></div>
-      <div class="brand-sub" id="brand-sub">YUN YUN</div>
-      <h1 class="brand-title" id="title">勻勻醫美諮詢服務</h1>
-      <p class="brand-tagline" id="tagline">用專業陪伴你，變美更安心 ♡</p>
-    </header>
-
-    <section class="clinic-card" id="clinic-card">
-      <div class="clinic-card-deco" aria-hidden="true">❀</div>
-      <p class="clinic-name" id="clinic-name"></p>
-      <p class="clinic-address" id="clinic-address"></p>
-    </section>
-
-    <section class="group" id="group-pros">
-      <div class="group-head">
-        <h2 class="group-title">
-          <span class="group-icon">♛</span>
-          <span id="group-pros-label">為什麼選擇勻勻</span>
-          <span class="group-multi">（多選）</span>
-        </h2>
-        <span class="group-meta"><span class="count" data-count="pros">0</span> 已選 · 至少選 1 個</span>
-      </div>
-      <div class="tag-list" data-group="pros"></div>
-    </section>
-
-    <section class="group" id="group-feelings">
-      <div class="group-head">
-        <h2 class="group-title">
-          <span class="group-icon">♥</span>
-          <span>當天體驗感受</span>
-          <span class="group-multi">（多選）</span>
-        </h2>
-        <span class="group-meta"><span class="count" data-count="feelings">0</span> 已選 · 至少選 1 個</span>
-      </div>
-      <div class="tag-list" data-group="feelings"></div>
-    </section>
-
-    <section class="actions" id="actions">
-      <button id="submit-btn" type="button" class="primary-btn">送出評價</button>
-      <p class="actions-hint">兩段都至少選 1 項才能送出</p>
-    </section>
-
-    <section class="thanks-card" id="thanks-card">
-      <div class="thanks-icon" aria-hidden="true">✉</div>
-      <p class="thanks-text" id="thank-you-text"></p>
-      <p class="thanks-sign" id="thank-you-sign">— 勻勻</p>
-    </section>
+  <main class="maintenance">
+    <div class="maintenance-icon">🌸</div>
+    <h1>服務暫停維護中</h1>
+    <p>系統正在更新與優化</p>
+    <p>請稍候片刻再回來</p>
+    <p class="maintenance-sign">— 勻勻 ♡</p>
   </main>
-
-  <footer class="bottom-slogan" id="bottom-slogan">
-    <span class="slogan-spark">✧</span>
-    <span id="slogan-text">美麗的事，交給專業｜安心的事，交給勻勻</span>
-    <span class="slogan-heart">♥</span>
-  </footer>
-
-  <div id="result-modal" class="modal" hidden>
-    <div class="modal-card">
-      <button class="modal-close" id="modal-close" aria-label="關閉">×</button>
-      <h2 class="modal-title">🎉 完成 3 步驟就送出</h2>
-
-      <div class="modal-section">
-        <p class="modal-label">你的評論預覽</p>
-        <pre id="comment-preview" class="comment-box"></pre>
-      </div>
-
-      <div class="modal-section" id="image-picker-section" hidden>
-        <p class="modal-label">選擇要附上的照片（會自動下載到手機）</p>
-        <div id="image-picker" class="image-picker"></div>
-      </div>
-
-      <ol class="step-list">
-        <li>點下方按鈕 → <span id="step-image-hint" hidden>系統會把勾選的照片下載到你手機，下載完自動開啟 Google 評論</span><span id="step-no-image-hint">系統會自動開啟 Google 評論</span></li>
-        <li>在 Google 評論頁：點 5 顆星 → 長按／右鍵貼上 <span id="step-image-photo" hidden>→ 上傳剛下載的照片</span> → 送出</li>
-      </ol>
-      <p class="mobile-fallback-hint">📱 手機如果開的是店家地圖頁，請點頁面上的「撰寫評論」按鈕進入</p>
-
-      <div class="modal-actions">
-        <button id="open-google-btn" type="button" class="primary-btn primary-btn-wide">前往 Google 評論</button>
-      </div>
-
-      <p id="copy-status" class="copy-status" aria-live="polite"></p>
-    </div>
-  </div>
-
-  <a class="admin-link" href="admin.html" title="管理員">⚙</a>
-
-  <script src="config.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
